@@ -1,127 +1,196 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
+import { goalSchema, type GoalFormData } from "@/lib/validations"
+import { useGoalsStore } from "@/store/use-goals-store"
+import { toast } from "sonner"
+import { useState } from "react"
 
 interface GoalFormProps {
-  onSubmit: () => void
+  onSuccess?: () => void
   onCancel: () => void
 }
 
-const goalTypes = [
-  { value: "savings", label: "Poupança" },
-  { value: "purchase", label: "Compra" },
-  { value: "investment", label: "Investimento" },
-  { value: "emergency", label: "Reserva de Emergência" },
-  { value: "travel", label: "Viagem" },
-  { value: "other", label: "Outro" },
+const goalIcons = [
+  { value: "💰", label: "💰 Dinheiro" },
+  { value: "✈️", label: "✈️ Viagem" },
+  { value: "🏠", label: "🏠 Casa" },
+  { value: "🚗", label: "🚗 Carro" },
+  { value: "📚", label: "📚 Educação" },
+  { value: "💍", label: "💍 Casamento" },
+  { value: "🎯", label: "🎯 Meta" },
+  { value: "🎁", label: "🎁 Presente" },
 ]
 
-export function GoalForm({ onSubmit, onCancel }: GoalFormProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    type: "",
-    targetAmount: "",
-    currentAmount: "",
-    targetDate: "",
-    description: "",
+export function GoalForm({ onSuccess, onCancel }: GoalFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { addGoal } = useGoalsStore()
+
+  const form = useForm<GoalFormData>({
+    resolver: zodResolver(goalSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      targetAmount: 0,
+      deadline: "",
+      icon: "🎯",
+      color: "#3b82f6",
+      sharedWithUserIds: [],
+    },
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Goal submitted:", formData)
-    onSubmit()
+  async function onSubmit(data: GoalFormData) {
+    try {
+      setIsSubmitting(true)
+      
+      const response = await fetch('/api/goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erro ao criar meta')
+      }
+
+      const newGoal = await response.json()
+      addGoal(newGoal)
+      
+      toast.success('Meta criada com sucesso!')
+      onSuccess?.()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar meta')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nome da Meta</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Ex: Viagem para Europa"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="type">Tipo</Label>
-          <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              {goalTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="targetAmount">Valor da Meta</Label>
-          <Input
-            id="targetAmount"
-            type="number"
-            step="0.01"
-            value={formData.targetAmount}
-            onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
-            placeholder="0,00"
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="currentAmount">Valor Atual</Label>
-          <Input
-            id="currentAmount"
-            type="number"
-            step="0.01"
-            value={formData.currentAmount}
-            onChange={(e) => setFormData({ ...formData, currentAmount: e.target.value })}
-            placeholder="0,00"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="targetDate">Data Alvo</Label>
-        <Input
-          id="targetDate"
-          type="date"
-          value={formData.targetDate}
-          onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome da Meta</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex: Viagem para Europa" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Descrição</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Descrição da meta (opcional)"
-          rows={3}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="targetAmount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Valor Alvo (R$)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="0.00" 
+                    {...field}
+                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="deadline"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Prazo (opcional)</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="icon"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ícone</FormLabel>
+                <FormControl>
+                  <select 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    {...field}
+                  >
+                    {goalIcons.map((icon) => (
+                      <option key={icon.value} value={icon.value}>
+                        {icon.label}
+                      </option>
+                    ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cor</FormLabel>
+                <FormControl>
+                  <Input type="color" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição (opcional)</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Detalhes sobre a meta..." 
+                  rows={3}
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Adicione informações sobre como alcançar essa meta
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="flex gap-2 justify-end">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit">Salvar Meta</Button>
-      </div>
-    </form>
+        <div className="flex gap-2 justify-end">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Salvando...' : 'Salvar Meta'}
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }
