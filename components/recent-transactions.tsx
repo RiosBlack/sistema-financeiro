@@ -1,99 +1,100 @@
 "use client"
 
+import { useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-
-const transactions = [
-  {
-    id: 1,
-    description: "Salário",
-    category: "Receita",
-    subcategory: "Trabalho",
-    amount: 5000,
-    type: "income",
-    date: "2024-01-15",
-    user: "João Silva",
-    account: "Conta Corrente",
-  },
-  {
-    id: 2,
-    description: "Supermercado",
-    category: "Alimentação",
-    subcategory: "Compras",
-    amount: -250,
-    type: "expense",
-    date: "2024-01-14",
-    user: "Maria Silva",
-    account: "Cartão de Crédito",
-  },
-  {
-    id: 3,
-    description: "Combustível",
-    category: "Transporte",
-    subcategory: "Gasolina",
-    amount: -120,
-    type: "expense",
-    date: "2024-01-13",
-    user: "João Silva",
-    account: "Cartão de Débito",
-  },
-  {
-    id: 4,
-    description: "Freelance",
-    category: "Receita",
-    subcategory: "Extra",
-    amount: 800,
-    type: "income",
-    date: "2024-01-12",
-    user: "João Silva",
-    account: "Conta Poupança",
-  },
-  {
-    id: 5,
-    description: "Academia",
-    category: "Saúde",
-    subcategory: "Exercícios",
-    amount: -89,
-    type: "expense",
-    date: "2024-01-11",
-    user: "Maria Silva",
-    account: "Cartão de Crédito",
-  },
-]
+import { useTransactionsStore } from "@/store/use-transactions-store"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import { Loader2 } from "lucide-react"
 
 export function RecentTransactions() {
+  const { transactions, loading, fetchTransactions, setFilters } = useTransactionsStore()
+
+  useEffect(() => {
+    // Buscar últimas transações
+    setFilters({ limit: 10 })
+    fetchTransactions()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (transactions.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        Nenhuma transação recente
+      </div>
+    )
+  }
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Descrição</TableHead>
           <TableHead>Categoria</TableHead>
-          <TableHead>Usuário</TableHead>
-          <TableHead>Conta</TableHead>
+          <TableHead>Conta/Cartão</TableHead>
           <TableHead>Data</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead className="text-right">Valor</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {transactions.map((transaction) => (
+        {transactions.slice(0, 10).map((transaction) => (
           <TableRow key={transaction.id}>
-            <TableCell className="font-medium">{transaction.description}</TableCell>
-            <TableCell>
-              <div className="flex flex-col">
-                <span className="text-sm">{transaction.category}</span>
-                <span className="text-xs text-muted-foreground">{transaction.subcategory}</span>
+            <TableCell className="font-medium">
+              <div>
+                {transaction.description}
+                {transaction.installments && transaction.installments > 1 && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({transaction.currentInstallment}/{transaction.installments})
+                  </span>
+                )}
               </div>
             </TableCell>
-            <TableCell>{transaction.user}</TableCell>
-            <TableCell>{transaction.account}</TableCell>
-            <TableCell>{new Date(transaction.date).toLocaleDateString("pt-BR")}</TableCell>
+            <TableCell>
+              {transaction.category && (
+                <div className="flex items-center gap-1">
+                  {transaction.category.icon && <span>{transaction.category.icon}</span>}
+                  <span className="text-sm">{transaction.category.name}</span>
+                </div>
+              )}
+            </TableCell>
+            <TableCell>
+              {transaction.bankAccount && (
+                <span className="text-sm">{transaction.bankAccount.name}</span>
+              )}
+              {transaction.card && (
+                <span className="text-sm">
+                  {transaction.card.name}
+                </span>
+              )}
+            </TableCell>
+            <TableCell className="text-sm">
+              {format(new Date(transaction.date), "dd/MM/yyyy", { locale: ptBR })}
+            </TableCell>
+            <TableCell>
+              <Badge variant={transaction.isPaid ? "default" : "secondary"} className="text-xs">
+                {transaction.isPaid ? "Pago" : "Pendente"}
+              </Badge>
+            </TableCell>
             <TableCell className="text-right">
               <Badge
-                variant={transaction.type === "income" ? "default" : "destructive"}
-                className={transaction.type === "income" ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
+                variant={transaction.type === "INCOME" ? "default" : "destructive"}
+                className={
+                  transaction.type === "INCOME" 
+                    ? "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-100" 
+                    : ""
+                }
               >
-                {transaction.type === "income" ? "+" : ""}
-                R$ {Math.abs(transaction.amount).toLocaleString()}
+                {transaction.type === "INCOME" ? "+" : "-"}
+                R$ {Number(transaction.amount).toFixed(2)}
               </Badge>
             </TableCell>
           </TableRow>

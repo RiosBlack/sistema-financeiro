@@ -1,29 +1,99 @@
 "use client"
 
-import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-
-const data = [
-  { name: "Jul", expectativa: 3200, realizado: 3000 },
-  { name: "Ago", expectativa: 3400, realizado: 3200 },
-  { name: "Set", expectativa: 3100, realizado: null },
-  { name: "Out", expectativa: 3300, realizado: null },
-  { name: "Nov", expectativa: 3500, realizado: null },
-  { name: "Dez", expectativa: 4000, realizado: null },
-]
+import { useEffect, useState } from "react"
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
+import { useTransactionsStore } from "@/store/use-transactions-store"
 
 export function ExpenseExpectations() {
+  const { transactions, fetchTransactions, setFilters } = useTransactionsStore()
+  const [chartData, setChartData] = useState<any[]>([])
+
+  useEffect(() => {
+    // Buscar transações dos últimos 3 meses e próximos 3 meses
+    const now = new Date()
+    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+    const threeMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 4, 0)
+    
+    setFilters({
+      type: 'EXPENSE',
+      startDate: threeMonthsAgo.toISOString().split('T')[0],
+      endDate: threeMonthsAhead.toISOString().split('T')[0],
+    })
+    fetchTransactions()
+  }, [])
+
+  useEffect(() => {
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+    const data = []
+
+    // Gerar dados para 6 meses (3 passados + atual + 2 futuros)
+    for (let i = -2; i <= 3; i++) {
+      const date = new Date(currentYear, currentMonth + i, 1)
+      const month = date.getMonth()
+      const year = date.getFullYear()
+      const isFuture = i > 0
+
+      // Calcular despesas realizadas
+      const monthExpenses = transactions
+        .filter(t => {
+          const tDate = new Date(t.date)
+          return (
+            t.type === 'EXPENSE' &&
+            t.isPaid &&
+            tDate.getMonth() === month &&
+            tDate.getFullYear() === year
+          )
+        })
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+
+      // Calcular expectativa (transações não pagas + média dos últimos meses)
+      const expectedExpenses = transactions
+        .filter(t => {
+          const tDate = new Date(t.date)
+          return (
+            t.type === 'EXPENSE' &&
+            !t.isPaid &&
+            tDate.getMonth() === month &&
+            tDate.getFullYear() === year
+          )
+        })
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+
+      data.push({
+        name: monthNames[month],
+        expectativa: isFuture ? (monthExpenses || expectedExpenses || 0) : expectedExpenses + monthExpenses,
+        realizado: !isFuture ? monthExpenses : null,
+      })
+    }
+
+    setChartData(data)
+  }, [transactions])
+
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <LineChart data={data}>
-        <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+      <LineChart data={chartData}>
+        <XAxis 
+          dataKey="name" 
+          stroke="#888888" 
+          fontSize={12} 
+          tickLine={false} 
+          axisLine={false} 
+        />
         <YAxis
           stroke="#888888"
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `R$${value}`}
+          tickFormatter={(value) => `R$${value.toFixed(0)}`}
         />
-        <Tooltip formatter={(value) => [`R$${value}`, ""]} />
+        <Tooltip 
+          formatter={(value: number | null) => value ? [`R$${value.toFixed(2)}`, ""] : ['N/A', '']}
+          contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+        />
+        <Legend />
         <Line
           type="monotone"
           dataKey="expectativa"
@@ -39,6 +109,7 @@ export function ExpenseExpectations() {
           strokeWidth={2}
           dot={{ fill: "#82ca9d" }}
           name="Realizado"
+          connectNulls={false}
         />
       </LineChart>
     </ResponsiveContainer>
