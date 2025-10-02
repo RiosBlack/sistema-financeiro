@@ -8,28 +8,38 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   })
 
-  // Lista de rotas públicas que não requerem autenticação
-  const publicRoutes = ['/login']
-  const isPublicRoute = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+  const { pathname } = request.nextUrl
 
-  // Se for uma rota pública, permite o acesso
-  if (isPublicRoute) {
+  // Lista de rotas públicas que não requerem autenticação
+  const publicRoutes = ['/login', '/register']
+  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))
+
+  // Se não estiver autenticado
+  if (!token) {
+    // Se estiver tentando acessar a raiz, redireciona para login
+    if (pathname === '/') {
+      const loginUrl = new URL('/login', request.url)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    // Se não for rota pública, redireciona para login
+    if (!isPublicRoute) {
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    // Se for rota pública, permite acesso
     return NextResponse.next()
   }
 
-  // Se não estiver autenticado e tentar acessar uma rota protegida, redireciona para o login
-  if (!token) {
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // Se estiver autenticado e tentar acessar o login, redireciona para o dashboard
-  if (token && request.nextUrl.pathname === '/login') {
+  // Se estiver autenticado e tentar acessar login ou raiz, redireciona para dashboard
+  if (pathname === '/login' || pathname === '/' || pathname === '/register') {
     const dashboardUrl = new URL('/dashboard', request.url)
     return NextResponse.redirect(dashboardUrl)
   }
 
-  // Se estiver autenticado e acessar uma rota protegida, permite o acesso
+  // Se estiver autenticado e acessar qualquer outra rota, permite o acesso
   return NextResponse.next()
 }
 
