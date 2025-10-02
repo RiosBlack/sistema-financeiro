@@ -173,10 +173,15 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
             name="bankAccountId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Conta Bancária</FormLabel>
+                <FormLabel>Conta Bancária {!watchCard && "*"}</FormLabel>
                 <Select 
-                  onValueChange={field.onChange} 
-                  value={field.value} 
+                  onValueChange={(value) => {
+                    field.onChange(value === "none" ? "" : value)
+                    if (value !== "none") {
+                      form.setValue("cardId", "")
+                    }
+                  }} 
+                  value={field.value || "none"}
                   disabled={!!watchCard}
                 >
                   <FormControl>
@@ -185,7 +190,7 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Nenhuma</SelectItem>
+                    <SelectItem value="none">Nenhuma</SelectItem>
                     {accounts.map((account) => (
                       <SelectItem key={account.id} value={account.id}>
                         {account.name} - {account.institution}
@@ -202,10 +207,15 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
             name="cardId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cartão</FormLabel>
+                <FormLabel>Cartão {!watchBankAccount && "*"}</FormLabel>
                 <Select 
-                  onValueChange={field.onChange} 
-                  value={field.value} 
+                  onValueChange={(value) => {
+                    field.onChange(value === "none" ? "" : value)
+                    if (value !== "none") {
+                      form.setValue("bankAccountId", "")
+                    }
+                  }}
+                  value={field.value || "none"}
                   disabled={!!watchBankAccount}
                 >
                   <FormControl>
@@ -214,7 +224,7 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">Nenhum</SelectItem>
+                    <SelectItem value="none">Nenhum</SelectItem>
                     {cards.map((card) => (
                       <SelectItem key={card.id} value={card.id}>
                         {card.name} - **** {card.lastDigits}
