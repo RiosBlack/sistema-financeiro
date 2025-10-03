@@ -252,19 +252,19 @@ export default function TransactionsPage() {
                 ? "Deletar parcela ou todas?"
                 : "Confirmar exclusão"}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogDescription asChild>
               {deleteDialog.transaction?.installments && deleteDialog.transaction.installments > 1 ? (
-                <div className="space-y-3">
-                  <p>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <div>
                     Esta é a parcela <strong>{deleteDialog.transaction.currentInstallment}/{deleteDialog.transaction.installments}</strong> de <strong>{deleteDialog.transaction.description}</strong>.
-                  </p>
-                  <p>Você deseja deletar apenas esta parcela ou todas as {deleteDialog.transaction.installments} parcelas?</p>
+                  </div>
+                  <div>Você deseja deletar apenas esta parcela ou todas as {deleteDialog.transaction.installments} parcelas?</div>
                 </div>
               ) : (
-                <p>
+                <div className="text-sm text-muted-foreground">
                   Tem certeza que deseja deletar a transação <strong>{deleteDialog.transaction?.description}</strong>? 
                   Esta ação não pode ser desfeita.
-                </p>
+                </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
