@@ -45,7 +45,7 @@ export function ExpensesByCategory() {
     const categoryMap = new Map<string, { name: string, value: number, color: string }>()
 
     transactions
-      .filter(t => t.type === 'EXPENSE' && t.isPaid)
+      .filter(t => t.type === 'EXPENSE')
       .forEach((transaction) => {
         const categoryName = transaction.category?.name || 'Sem Categoria'
         const categoryColor = transaction.category?.color || COLORS[0]

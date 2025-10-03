@@ -49,7 +49,7 @@ export function ExpenseExpectations() {
       const year = date.getFullYear()
       const isFuture = i > 0
 
-      // Calcular despesas realizadas
+      // Calcular despesas realizadas (pagas)
       const monthExpenses = transactions
         .filter(t => {
           const tDate = new Date(t.date)
@@ -62,13 +62,12 @@ export function ExpenseExpectations() {
         })
         .reduce((sum, t) => sum + Number(t.amount), 0)
 
-      // Calcular expectativa (transações não pagas + média dos últimos meses)
-      const expectedExpenses = transactions
+      // Calcular todas as despesas do mês (pagas + não pagas) para expectativa
+      const allMonthExpenses = transactions
         .filter(t => {
           const tDate = new Date(t.date)
           return (
             t.type === 'EXPENSE' &&
-            !t.isPaid &&
             tDate.getMonth() === month &&
             tDate.getFullYear() === year
           )
@@ -77,7 +76,7 @@ export function ExpenseExpectations() {
 
       data.push({
         name: monthNames[month],
-        expectativa: isFuture ? (monthExpenses || expectedExpenses || 0) : expectedExpenses + monthExpenses,
+        expectativa: allMonthExpenses,
         realizado: !isFuture ? monthExpenses : null,
       })
     }

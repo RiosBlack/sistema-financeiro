@@ -24,7 +24,9 @@ export function Overview() {
         if (!response.ok) throw new Error('Erro ao buscar transações')
         
         const data = await response.json()
-        processChartData(data.transactions)
+        console.log('📊 Overview - Transações recebidas:', data.transactions?.length || 0)
+        console.log('📊 Overview - Dados completos:', data)
+        processChartData(data.transactions || [])
       } catch (error) {
         console.error('Erro ao buscar dados do gráfico:', error)
       } finally {
@@ -40,6 +42,8 @@ export function Overview() {
     const now = new Date()
     const last6Months = []
 
+    console.log('📊 Processando transações:', transactions.length)
+
     // Criar array com os últimos 6 meses
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -52,16 +56,27 @@ export function Overview() {
       })
     }
 
-    // Agregar transações por mês
-    transactions.forEach((transaction) => {
-      if (!transaction.isPaid) return // Apenas transações pagas
+    console.log('📊 Meses criados:', last6Months.map(m => `${m.name}/${m.year}`))
 
+    // Agregar transações por mês
+    let processedCount = 0
+    transactions.forEach((transaction) => {
+      console.log('📊 Transação:', {
+        description: transaction.description,
+        type: transaction.type,
+        amount: transaction.amount,
+        isPaid: transaction.isPaid,
+        date: transaction.date
+      })
+
+      // REMOVIDO FILTRO DE isPaid - mostrar todas as transações
       const date = new Date(transaction.date)
       const monthData = last6Months.find(
         m => m.month === date.getMonth() && m.year === date.getFullYear()
       )
 
       if (monthData) {
+        processedCount++
         const amount = Number(transaction.amount)
         if (transaction.type === 'INCOME') {
           monthData.receitas += amount
@@ -70,6 +85,9 @@ export function Overview() {
         }
       }
     })
+
+    console.log('📊 Transações processadas:', processedCount)
+    console.log('📊 Dados finais:', last6Months)
 
     setChartData(last6Months)
   }
