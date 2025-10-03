@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
-import { useTransactionsStore } from "@/store/use-transactions-store"
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", 
@@ -10,24 +9,35 @@ const COLORS = [
 ]
 
 export function ExpensesByCategory() {
-  const { transactions, fetchTransactions, setFilters } = useTransactionsStore()
   const [chartData, setChartData] = useState<any[]>([])
 
   useEffect(() => {
-    // Buscar transações do mês atual
-    const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    
-    setFilters({
-      type: 'EXPENSE',
-      startDate: startOfMonth.toISOString().split('T')[0],
-      endDate: endOfMonth.toISOString().split('T')[0],
-    })
-    fetchTransactions()
+    const fetchData = async () => {
+      try {
+        const now = new Date()
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        
+        const params = new URLSearchParams({
+          type: 'EXPENSE',
+          startDate: startOfMonth.toISOString().split('T')[0],
+          endDate: endOfMonth.toISOString().split('T')[0],
+        })
+
+        const response = await fetch(`/api/transactions?${params.toString()}`)
+        if (!response.ok) throw new Error('Erro ao buscar transações')
+        
+        const data = await response.json()
+        processChartData(data.transactions)
+      } catch (error) {
+        console.error('Erro ao buscar dados do gráfico:', error)
+      }
+    }
+
+    fetchData()
   }, [])
 
-  useEffect(() => {
+  const processChartData = (transactions: any[]) => {
     // Agrupar despesas por categoria
     const categoryMap = new Map<string, { name: string, value: number, color: string }>()
 
@@ -58,7 +68,7 @@ export function ExpensesByCategory() {
       }))
 
     setChartData(data)
-  }, [transactions])
+  }
 
   if (chartData.length === 0) {
     return (

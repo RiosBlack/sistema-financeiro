@@ -2,26 +2,40 @@
 
 import { useEffect, useState } from "react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
-import { useTransactionsStore } from "@/store/use-transactions-store"
 
 export function Overview() {
-  const { transactions, fetchTransactions, setFilters } = useTransactionsStore()
   const [chartData, setChartData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Buscar transações dos últimos 6 meses
-    const now = new Date()
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
-    
-    setFilters({
-      startDate: sixMonthsAgo.toISOString().split('T')[0],
-      endDate: now.toISOString().split('T')[0],
-    })
-    fetchTransactions()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        // Buscar transações dos últimos 6 meses diretamente da API
+        const now = new Date()
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+        
+        const params = new URLSearchParams({
+          startDate: sixMonthsAgo.toISOString().split('T')[0],
+          endDate: now.toISOString().split('T')[0],
+        })
+
+        const response = await fetch(`/api/transactions?${params.toString()}`)
+        if (!response.ok) throw new Error('Erro ao buscar transações')
+        
+        const data = await response.json()
+        processChartData(data.transactions)
+      } catch (error) {
+        console.error('Erro ao buscar dados do gráfico:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
-  useEffect(() => {
-    // Processar dados para o gráfico
+  const processChartData = (transactions: any[]) => {
     const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     const now = new Date()
     const last6Months = []
@@ -58,7 +72,7 @@ export function Overview() {
     })
 
     setChartData(last6Months)
-  }, [transactions])
+  }
 
   return (
     <ResponsiveContainer width="100%" height={350}>

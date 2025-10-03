@@ -2,27 +2,37 @@
 
 import { useEffect, useState } from "react"
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
-import { useTransactionsStore } from "@/store/use-transactions-store"
 
 export function ExpenseExpectations() {
-  const { transactions, fetchTransactions, setFilters } = useTransactionsStore()
   const [chartData, setChartData] = useState<any[]>([])
 
   useEffect(() => {
-    // Buscar transações dos últimos 3 meses e próximos 3 meses
-    const now = new Date()
-    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1)
-    const threeMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 4, 0)
-    
-    setFilters({
-      type: 'EXPENSE',
-      startDate: threeMonthsAgo.toISOString().split('T')[0],
-      endDate: threeMonthsAhead.toISOString().split('T')[0],
-    })
-    fetchTransactions()
+    const fetchData = async () => {
+      try {
+        const now = new Date()
+        const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+        const threeMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 4, 0)
+        
+        const params = new URLSearchParams({
+          type: 'EXPENSE',
+          startDate: threeMonthsAgo.toISOString().split('T')[0],
+          endDate: threeMonthsAhead.toISOString().split('T')[0],
+        })
+
+        const response = await fetch(`/api/transactions?${params.toString()}`)
+        if (!response.ok) throw new Error('Erro ao buscar transações')
+        
+        const data = await response.json()
+        processChartData(data.transactions)
+      } catch (error) {
+        console.error('Erro ao buscar dados do gráfico:', error)
+      }
+    }
+
+    fetchData()
   }, [])
 
-  useEffect(() => {
+  const processChartData = (transactions: any[]) => {
     const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
     const now = new Date()
     const currentMonth = now.getMonth()
@@ -70,7 +80,7 @@ export function ExpenseExpectations() {
     }
 
     setChartData(data)
-  }, [transactions])
+  }
 
   return (
     <ResponsiveContainer width="100%" height={350}>
