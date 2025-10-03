@@ -70,15 +70,15 @@ export default function TransactionsPage() {
     }
   }
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (deleteAll: boolean = false) => {
     if (!deleteDialog.transaction) return
 
     try {
-      await deleteTransaction(deleteDialog.transaction.id, deleteDialog.deleteAll)
+      await deleteTransaction(deleteDialog.transaction.id, deleteAll)
       
       toast({
-        title: deleteDialog.deleteAll ? "Todas as parcelas deletadas!" : "Transação deletada!",
-        description: deleteDialog.deleteAll 
+        title: deleteAll ? "Todas as parcelas deletadas!" : "Transação deletada!",
+        description: deleteAll 
           ? "Todas as parcelas foram removidas com sucesso." 
           : "A transação foi removida com sucesso.",
       })
@@ -274,25 +274,19 @@ export default function TransactionsPage() {
               <>
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setDeleteDialog(prev => ({ ...prev, deleteAll: false }))
-                    confirmDelete()
-                  }}
+                  onClick={() => confirmDelete(false)}
                 >
                   Apenas esta parcela
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => {
-                    setDeleteDialog(prev => ({ ...prev, deleteAll: true }))
-                    confirmDelete()
-                  }}
+                  onClick={() => confirmDelete(true)}
                 >
                   Todas as {deleteDialog.transaction.installments} parcelas
                 </Button>
               </>
             ) : (
-              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <AlertDialogAction onClick={() => confirmDelete(false)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Deletar
               </AlertDialogAction>
             )}
