@@ -21,6 +21,7 @@ interface TransactionsState {
   setFilters: (filters: TransactionFilters) => void;
   fetchTransactions: () => Promise<void>;
   deleteTransaction: (id: string, deleteAll?: boolean) => Promise<void>;
+  togglePaidStatus: (id: string, isPaid: boolean) => Promise<void>;
 }
 
 export const useTransactionsStore = create<TransactionsState>((set, get) => ({
@@ -100,6 +101,35 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
       await get().fetchTransactions();
     } catch (error) {
       console.error('Erro ao deletar transação:', error);
+      throw error;
+    }
+  },
+
+  togglePaidStatus: async (id: string, isPaid: boolean) => {
+    try {
+      const response = await fetch(`/api/transactions/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isPaid }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao atualizar status');
+      }
+
+      const updatedTransaction = await response.json();
+      
+      // Atualizar transação localmente
+      set((state) => ({
+        transactions: state.transactions.map(t => 
+          t.id === id ? { ...t, isPaid: updatedTransaction.isPaid } : t
+        )
+      }));
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
       throw error;
     }
   },

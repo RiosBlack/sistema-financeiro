@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TransactionForm } from "@/components/forms/transaction-form"
-import { Plus, Loader2, Trash2, Eye } from "lucide-react"
+import { Plus, Loader2, Trash2, Eye, Check, X } from "lucide-react"
 import { useTransactionsStore } from "@/store/use-transactions-store"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -45,7 +45,7 @@ export default function TransactionsPage() {
     transaction: null,
   })
   
-  const { transactions, loading, fetchTransactions, setFilters, deleteTransaction } = useTransactionsStore()
+  const { transactions, loading, fetchTransactions, setFilters, deleteTransaction, togglePaidStatus } = useTransactionsStore()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -99,6 +99,28 @@ export default function TransactionsPage() {
       toast({
         title: "Erro ao deletar",
         description: "Ocorreu um erro ao deletar a transação. Tente novamente.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleTogglePaid = async (transaction: Transaction) => {
+    try {
+      const newStatus = !transaction.isPaid
+      await togglePaidStatus(transaction.id, newStatus)
+      
+      const statusText = newStatus ? 
+        (transaction.type === 'INCOME' ? 'recebida' : 'paga') : 
+        (transaction.type === 'INCOME' ? 'não recebida' : 'não paga')
+      
+      toast({
+        title: "Status atualizado!",
+        description: `A transação foi marcada como ${statusText}.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar",
+        description: "Ocorreu um erro ao atualizar o status. Tente novamente.",
         variant: "destructive",
       })
     }
@@ -236,18 +258,35 @@ export default function TransactionsPage() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => setViewDialog({ open: true, transaction })}
+                              title="Ver detalhes"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => handleTogglePaid(transaction)}
+                              title={transaction.isPaid ? 
+                                (transaction.type === 'INCOME' ? 'Marcar como não recebida' : 'Marcar como não paga') : 
+                                (transaction.type === 'INCOME' ? 'Marcar como recebida' : 'Marcar como paga')
+                              }
+                            >
+                              {transaction.isPaid ? (
+                                <X className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <Check className="h-4 w-4 text-green-600" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleDelete(transaction)}
+                              title="Deletar transação"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
