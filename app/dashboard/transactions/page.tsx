@@ -5,19 +5,37 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TransactionForm } from "@/components/forms/transaction-form"
-import { Plus, Loader2, ArrowUpDown, Calendar } from "lucide-react"
+import { Plus, Loader2, Trash2 } from "lucide-react"
 import { useTransactionsStore } from "@/store/use-transactions-store"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast"
+import { Transaction } from "@/types/api"
 
 export default function TransactionsPage() {
   const [showForm, setShowForm] = useState(false)
   const [formType, setFormType] = useState<"INCOME" | "EXPENSE">("EXPENSE")
   const [activeTab, setActiveTab] = useState("all")
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; transaction: Transaction | null; deleteAll: boolean }>({
+    open: false,
+    transaction: null,
+    deleteAll: false,
+  })
   
-  const { transactions, loading, fetchTransactions, setFilters } = useTransactionsStore()
+  const { transactions, loading, fetchTransactions, setFilters, deleteTransaction } = useTransactionsStore()
+  const { toast } = useToast()
 
   useEffect(() => {
     // Carregar todas as transações inicialmente
@@ -40,6 +58,39 @@ export default function TransactionsPage() {
       setFilters({ type: "EXPENSE" })
     }
     fetchTransactions()
+  }
+
+  const handleDelete = (transaction: Transaction) => {
+    // Se é uma parcela (installments > 1), perguntar se quer deletar todas
+    if (transaction.installments && transaction.installments > 1) {
+      setDeleteDialog({ open: true, transaction, deleteAll: false })
+    } else {
+      // Transação única, deletar direto
+      setDeleteDialog({ open: true, transaction, deleteAll: false })
+    }
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteDialog.transaction) return
+
+    try {
+      await deleteTransaction(deleteDialog.transaction.id, deleteDialog.deleteAll)
+      
+      toast({
+        title: deleteDialog.deleteAll ? "Todas as parcelas deletadas!" : "Transação deletada!",
+        description: deleteDialog.deleteAll 
+          ? "Todas as parcelas foram removidas com sucesso." 
+          : "A transação foi removida com sucesso.",
+      })
+      
+      setDeleteDialog({ open: false, transaction: null, deleteAll: false })
+    } catch (error) {
+      toast({
+        title: "Erro ao deletar",
+        description: "Ocorreu um erro ao deletar a transação. Tente novamente.",
+        variant: "destructive",
+      })
+    }
   }
 
   const filteredTransactions = transactions
@@ -126,16 +177,14 @@ export default function TransactionsPage() {
                       <TableHead>Conta/Cartão</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTransactions.map((transaction) => (
                       <TableRow key={transaction.id}>
                         <TableCell className="whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {format(new Date(transaction.date), "dd/MM/yyyy", { locale: ptBR })}
-                          </div>
+                          {format(new Date(transaction.date), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
                           <div>
@@ -175,6 +224,15 @@ export default function TransactionsPage() {
                             {transaction.type === 'INCOME' ? '+' : '-'} R$ {Number(transaction.amount).toFixed(2)}
                           </span>
                         </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(transaction)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -184,6 +242,63 @@ export default function TransactionsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, transaction: null, deleteAll: false })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteDialog.transaction?.installments && deleteDialog.transaction.installments > 1
+                ? "Deletar parcela ou todas?"
+                : "Confirmar exclusão"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteDialog.transaction?.installments && deleteDialog.transaction.installments > 1 ? (
+                <div className="space-y-3">
+                  <p>
+                    Esta é a parcela <strong>{deleteDialog.transaction.currentInstallment}/{deleteDialog.transaction.installments}</strong> de <strong>{deleteDialog.transaction.description}</strong>.
+                  </p>
+                  <p>Você deseja deletar apenas esta parcela ou todas as {deleteDialog.transaction.installments} parcelas?</p>
+                </div>
+              ) : (
+                <p>
+                  Tem certeza que deseja deletar a transação <strong>{deleteDialog.transaction?.description}</strong>? 
+                  Esta ação não pode ser desfeita.
+                </p>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            {deleteDialog.transaction?.installments && deleteDialog.transaction.installments > 1 ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDeleteDialog(prev => ({ ...prev, deleteAll: false }))
+                    confirmDelete()
+                  }}
+                >
+                  Apenas esta parcela
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setDeleteDialog(prev => ({ ...prev, deleteAll: true }))
+                    confirmDelete()
+                  }}
+                >
+                  Todas as {deleteDialog.transaction.installments} parcelas
+                </Button>
+              </>
+            ) : (
+              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Deletar
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

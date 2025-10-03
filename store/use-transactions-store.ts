@@ -20,6 +20,7 @@ interface TransactionsState {
   setError: (error: string | null) => void;
   setFilters: (filters: TransactionFilters) => void;
   fetchTransactions: () => Promise<void>;
+  deleteTransaction: (id: string, deleteAll?: boolean) => Promise<void>;
 }
 
 export const useTransactionsStore = create<TransactionsState>((set, get) => ({
@@ -80,6 +81,26 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
       });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+    }
+  },
+
+  deleteTransaction: async (id: string, deleteAll: boolean = false) => {
+    try {
+      const params = deleteAll ? '?deleteAll=true' : '';
+      const response = await fetch(`/api/transactions/${id}${params}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao deletar transação');
+      }
+
+      // Atualizar lista local
+      await get().fetchTransactions();
+    } catch (error) {
+      console.error('Erro ao deletar transação:', error);
+      throw error;
     }
   },
 }));

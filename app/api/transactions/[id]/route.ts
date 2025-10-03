@@ -132,6 +132,9 @@ export async function DELETE(
     const user = await getAuthenticatedUser();
     if (!user) return unauthorizedResponse();
 
+    const { searchParams } = new URL(request.url);
+    const deleteAll = searchParams.get("deleteAll") === "true";
+
     // Verificar se transação pertence ao usuário
     const transaction = await prisma.transaction.findFirst({
       where: {
@@ -140,6 +143,7 @@ export async function DELETE(
       },
       include: {
         childTransactions: true,
+        parentTransaction: true,
       },
     });
 
@@ -147,17 +151,67 @@ export async function DELETE(
       return errorResponse("Transação não encontrada", 404);
     }
 
+    // Se é uma parcela e quer deletar todas
+    if (deleteAll && transaction.parentTransactionId) {
+      // Buscar todas as parcelas
+      const allInstallments = await prisma.transaction.findMany({
+        where: {
+          parentTransactionId: transaction.parentTransactionId,
+        },
+      });
+
+      // Reverter saldo de parcelas pagas
+      for (const inst of allInstallments) {
+        if (inst.isPaid && inst.bankAccountId) {
+          await updateBankAccountBalance(
+            inst.bankAccountId,
+            inst.amount.toNumber(),
+            inst.type === "INCOME" ? "EXPENSE" : "INCOME"
+          );
+        }
+      }
+
+      // Deletar todas as parcelas
+      await prisma.transaction.deleteMany({
+        where: {
+          parentTransactionId: transaction.parentTransactionId,
+        },
+      });
+
+      // Deletar transação pai
+      await prisma.transaction.delete({
+        where: { id: transaction.parentTransactionId },
+      });
+
+      return successResponse({ 
+        message: "Todas as parcelas foram deletadas com sucesso",
+        deletedCount: allInstallments.length
+      });
+    }
+
+    // Deletar apenas esta transação/parcela
     // Se foi paga, reverter saldo
     if (transaction.isPaid && transaction.bankAccountId) {
       await updateBankAccountBalance(
         transaction.bankAccountId,
         transaction.amount.toNumber(),
-        transaction.type === "INCOME" ? "EXPENSE" : "INCOME" // Inverter para reverter
+        transaction.type === "INCOME" ? "EXPENSE" : "INCOME"
       );
     }
 
-    // Se é transação parcelada (pai), deletar todas as parcelas
-    if (transaction.childTransactions.length > 0) {
+    // Se é transação pai (currentInstallment = 0), deletar também as filhas
+    if (transaction.currentInstallment === 0 && transaction.childTransactions.length > 0) {
+      // Reverter saldo de parcelas pagas
+      for (const child of transaction.childTransactions) {
+        if (child.isPaid && child.bankAccountId) {
+          await updateBankAccountBalance(
+            child.bankAccountId,
+            child.amount.toNumber(),
+            child.type === "INCOME" ? "EXPENSE" : "INCOME"
+          );
+        }
+      }
+
       await prisma.transaction.deleteMany({
         where: {
           parentTransactionId: params.id,
@@ -165,7 +219,7 @@ export async function DELETE(
       });
     }
 
-    // Deletar transação
+    // Deletar a transação
     await prisma.transaction.delete({
       where: { id: params.id },
     });
