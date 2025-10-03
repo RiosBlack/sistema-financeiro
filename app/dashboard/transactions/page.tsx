@@ -44,6 +44,10 @@ export default function TransactionsPage() {
     open: false,
     transaction: null,
   })
+  const [statusDialog, setStatusDialog] = useState<{ open: boolean; transaction: Transaction | null }>({
+    open: false,
+    transaction: null,
+  })
   
   const { transactions, loading, fetchTransactions, setFilters, deleteTransaction, togglePaidStatus } = useTransactionsStore()
   const { toast } = useToast()
@@ -104,19 +108,27 @@ export default function TransactionsPage() {
     }
   }
 
-  const handleTogglePaid = async (transaction: Transaction) => {
+  const handleTogglePaid = (transaction: Transaction) => {
+    setStatusDialog({ open: true, transaction })
+  }
+
+  const confirmTogglePaid = async () => {
+    if (!statusDialog.transaction) return
+
     try {
-      const newStatus = !transaction.isPaid
-      await togglePaidStatus(transaction.id, newStatus)
+      const newStatus = !statusDialog.transaction.isPaid
+      await togglePaidStatus(statusDialog.transaction.id, newStatus)
       
       const statusText = newStatus ? 
-        (transaction.type === 'INCOME' ? 'recebida' : 'paga') : 
-        (transaction.type === 'INCOME' ? 'não recebida' : 'não paga')
+        (statusDialog.transaction.type === 'INCOME' ? 'recebida' : 'paga') : 
+        (statusDialog.transaction.type === 'INCOME' ? 'não recebida' : 'não paga')
       
       toast({
         title: "Status atualizado!",
         description: `A transação foi marcada como ${statusText}.`,
       })
+
+      setStatusDialog({ open: false, transaction: null })
     } catch (error) {
       toast({
         title: "Erro ao atualizar",
@@ -301,6 +313,48 @@ export default function TransactionsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog de confirmação de status */}
+      <AlertDialog open={statusDialog.open} onOpenChange={(open) => !open && setStatusDialog({ open: false, transaction: null })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar alteração de status</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="text-sm text-muted-foreground">
+                {statusDialog.transaction && (
+                  <>
+                    Deseja marcar a transação <strong>{statusDialog.transaction.description}</strong> como{' '}
+                    <strong>
+                      {!statusDialog.transaction.isPaid ? 
+                        (statusDialog.transaction.type === 'INCOME' ? 'recebida' : 'paga') : 
+                        (statusDialog.transaction.type === 'INCOME' ? 'não recebida' : 'não paga')
+                      }
+                    </strong>?
+                    {statusDialog.transaction.bankAccountId && !statusDialog.transaction.isPaid && (
+                      <div className="mt-2 text-xs">
+                        O saldo da conta será {statusDialog.transaction.type === 'INCOME' ? 'aumentado' : 'reduzido'} em{' '}
+                        <strong>R$ {Number(statusDialog.transaction.amount).toFixed(2)}</strong>.
+                      </div>
+                    )}
+                    {statusDialog.transaction.bankAccountId && statusDialog.transaction.isPaid && (
+                      <div className="mt-2 text-xs">
+                        O saldo da conta será {statusDialog.transaction.type === 'INCOME' ? 'reduzido' : 'aumentado'} em{' '}
+                        <strong>R$ {Number(statusDialog.transaction.amount).toFixed(2)}</strong>.
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmTogglePaid}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialog de confirmação de exclusão */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, transaction: null, deleteAll: false })}>
