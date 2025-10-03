@@ -5,6 +5,7 @@ import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } f
 
 export function ExpenseExpectations() {
   const [chartData, setChartData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,6 +27,8 @@ export function ExpenseExpectations() {
         processChartData(data.transactions)
       } catch (error) {
         console.error('Erro ao buscar dados do gráfico:', error)
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -80,6 +83,14 @@ export function ExpenseExpectations() {
     }
 
     setChartData(data)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[350px]">
+        <div className="text-muted-foreground">Carregando...</div>
+      </div>
+    )
   }
 
   return (

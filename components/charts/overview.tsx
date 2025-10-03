@@ -74,6 +74,22 @@ export function Overview() {
     setChartData(last6Months)
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[350px]">
+        <div className="text-muted-foreground">Carregando...</div>
+      </div>
+    )
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[350px] text-muted-foreground">
+        Nenhuma transação nos últimos 6 meses
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width="100%" height={350}>
       <BarChart data={chartData}>
