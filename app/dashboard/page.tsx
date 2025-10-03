@@ -43,23 +43,26 @@ export default function DashboardPage() {
   console.log('💰 Total de contas:', accounts.length)
   console.log('💰 Saldo total calculado:', totalBalance)
   
+  // Receitas
   const incomeTransactions = transactions.filter(t => t.type === 'INCOME')
+  const paidIncomeTransactions = incomeTransactions.filter(t => t.isPaid)
+  const pendingIncomeTransactions = incomeTransactions.filter(t => !t.isPaid)
+  
+  const totalIncome = incomeTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
+  const paidIncome = paidIncomeTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
+  const pendingIncome = pendingIncomeTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
+  
+  // Despesas
   const expenseTransactions = transactions.filter(t => t.type === 'EXPENSE')
+  const paidExpenseTransactions = expenseTransactions.filter(t => t.isPaid)
+  const pendingExpenseTransactions = expenseTransactions.filter(t => !t.isPaid)
   
-  const totalIncome = incomeTransactions.reduce((acc, t) => {
-    const amount = Number(t.amount)
-    console.log('💵 Receita:', t.description, 'Valor:', amount, 'Paga:', t.isPaid)
-    return acc + amount
-  }, 0)
+  const totalExpenses = expenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
+  const paidExpenses = paidExpenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
+  const pendingExpenses = pendingExpenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
   
-  const totalExpenses = expenseTransactions.reduce((acc, t) => {
-    const amount = Number(t.amount)
-    console.log('💸 Despesa:', t.description, 'Valor:', amount, 'Paga:', t.isPaid)
-    return acc + amount
-  }, 0)
-  
-  console.log('💵 Total receitas:', totalIncome, '- Total transações:', incomeTransactions.length)
-  console.log('💸 Total despesas:', totalExpenses, '- Total transações:', expenseTransactions.length)
+  console.log('💵 Receitas - Total:', totalIncome, 'Pagas:', paidIncome, 'Pendentes:', pendingIncome)
+  console.log('💸 Despesas - Total:', totalExpenses, 'Pagas:', paidExpenses, 'Pendentes:', pendingExpenses)
   
   const completedGoals = goals.filter(g => g.isCompleted).length
   const totalGoals = goals.length
@@ -75,7 +78,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Cards de resumo */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {/* Saldo Total */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Saldo Total</CardTitle>
@@ -86,7 +90,7 @@ export default function DashboardPage() {
               <Loader2 className="h-8 w-8 animate-spin" />
             ) : (
               <>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-blue-600">
                   R$ {totalBalance.toFixed(2)}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -96,10 +100,12 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Receitas Recebidas */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receitas do Mês</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Receitas Recebidas</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -107,19 +113,43 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold text-green-600">
-                  R$ {totalIncome.toFixed(2)}
+                  R$ {paidIncome.toFixed(2)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {incomeTransactions.length} {incomeTransactions.length === 1 ? 'transação' : 'transações'}
+                  {paidIncomeTransactions.length} {paidIncomeTransactions.length === 1 ? 'transação' : 'transações'}
                 </p>
               </>
             )}
           </CardContent>
         </Card>
+
+        {/* Receitas Pendentes (A Receber) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Despesas do Mês</CardTitle>
-            <TrendingDown className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Receitas a Receber</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Loader2 className="h-8 w-8 animate-spin" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-green-400">
+                  R$ {pendingIncome.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {pendingIncomeTransactions.length} {pendingIncomeTransactions.length === 1 ? 'transação' : 'transações'}
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Despesas Pagas */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Despesas Pagas</CardTitle>
+            <TrendingDown className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -127,28 +157,32 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="text-2xl font-bold text-red-600">
-                  R$ {totalExpenses.toFixed(2)}
+                  R$ {paidExpenses.toFixed(2)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {expenseTransactions.length} {expenseTransactions.length === 1 ? 'transação' : 'transações'}
+                  {paidExpenseTransactions.length} {paidExpenseTransactions.length === 1 ? 'transação' : 'transações'}
                 </p>
               </>
             )}
           </CardContent>
         </Card>
+
+        {/* Despesas Pendentes (A Pagar) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Metas Atingidas</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Despesas a Pagar</CardTitle>
+            <TrendingDown className="h-4 w-4 text-red-400" />
           </CardHeader>
           <CardContent>
             {loading ? (
               <Loader2 className="h-8 w-8 animate-spin" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{completedGoals}/{totalGoals}</div>
+                <div className="text-2xl font-bold text-red-400">
+                  R$ {pendingExpenses.toFixed(2)}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {goalsPercentage}% das metas concluídas
+                  {pendingExpenseTransactions.length} {pendingExpenseTransactions.length === 1 ? 'transação' : 'transações'}
                 </p>
               </>
             )}
