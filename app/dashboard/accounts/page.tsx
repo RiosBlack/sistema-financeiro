@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AccountForm } from "@/components/forms/account-form"
+import { CardForm } from "@/components/forms/card-form"
 import { Plus, Loader2 } from "lucide-react"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
 import { useCardsStore } from "@/store/use-cards-store"
@@ -85,6 +86,24 @@ export default function AccountsPage() {
               onSuccess={() => {
                 setShowAccountForm(false)
                 fetchAccounts()
+              }} 
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {showCardForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Novo Cartão</CardTitle>
+            <CardDescription>Adicione um novo cartão de crédito ou débito</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CardForm 
+              onCancel={() => setShowCardForm(false)} 
+              onSuccess={() => {
+                setShowCardForm(false)
+                fetchCards()
               }} 
             />
           </CardContent>
