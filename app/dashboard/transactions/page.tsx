@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TransactionForm } from "@/components/forms/transaction-form"
-import { Plus, Loader2, Trash2 } from "lucide-react"
+import { Plus, Loader2, Trash2, Eye } from "lucide-react"
 import { useTransactionsStore } from "@/store/use-transactions-store"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +21,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { Transaction } from "@/types/api"
 
@@ -32,6 +39,10 @@ export default function TransactionsPage() {
     open: false,
     transaction: null,
     deleteAll: false,
+  })
+  const [viewDialog, setViewDialog] = useState<{ open: boolean; transaction: Transaction | null }>({
+    open: false,
+    transaction: null,
   })
   
   const { transactions, loading, fetchTransactions, setFilters, deleteTransaction } = useTransactionsStore()
@@ -225,13 +236,22 @@ export default function TransactionsPage() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(transaction)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setViewDialog({ open: true, transaction })}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(transaction)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -293,6 +313,165 @@ export default function TransactionsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog de visualização de detalhes */}
+      <Dialog open={viewDialog.open} onOpenChange={(open) => !open && setViewDialog({ open: false, transaction: null })}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Transação</DialogTitle>
+            <DialogDescription>
+              Informações completas da transação
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewDialog.transaction && (
+            <div className="space-y-6">
+              {/* Informações Básicas */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Descrição</label>
+                  <p className="text-base font-medium">{viewDialog.transaction.description}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Valor</label>
+                  <p className={`text-base font-bold ${viewDialog.transaction.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
+                    {viewDialog.transaction.type === 'INCOME' ? '+' : '-'} R$ {Number(viewDialog.transaction.amount).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Data</label>
+                  <p className="text-base">
+                    {format(new Date(viewDialog.transaction.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Tipo</label>
+                  <p className="text-base">
+                    <Badge variant={viewDialog.transaction.type === 'INCOME' ? 'default' : 'destructive'}>
+                      {viewDialog.transaction.type === 'INCOME' ? 'Receita' : 'Despesa'}
+                    </Badge>
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Status</label>
+                  <p className="text-base">
+                    <Badge variant={viewDialog.transaction.isPaid ? 'default' : 'secondary'}>
+                      {viewDialog.transaction.isPaid ? 'Pago' : 'Pendente'}
+                    </Badge>
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Categoria</label>
+                  <p className="text-base">
+                    {viewDialog.transaction.category && (
+                      <Badge variant="outline">
+                        {viewDialog.transaction.category.icon && `${viewDialog.transaction.category.icon} `}
+                        {viewDialog.transaction.category.name}
+                      </Badge>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Parcelamento */}
+              {viewDialog.transaction.installments && viewDialog.transaction.installments > 1 && (
+                <div className="border-t pt-4">
+                  <label className="text-sm font-medium text-muted-foreground">Parcelamento</label>
+                  <div className="mt-2 grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Parcela Atual</p>
+                      <p className="text-base font-medium">
+                        {viewDialog.transaction.currentInstallment} de {viewDialog.transaction.installments}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Valor da Parcela</p>
+                      <p className="text-base font-medium">
+                        R$ {Number(viewDialog.transaction.amount).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recorrência */}
+              {viewDialog.transaction.isRecurring && (
+                <div className="border-t pt-4">
+                  <label className="text-sm font-medium text-muted-foreground">Recorrência</label>
+                  <div className="mt-2">
+                    <p className="text-base">
+                      <Badge variant="outline">
+                        {viewDialog.transaction.recurringType === 'DAILY' && 'Diária'}
+                        {viewDialog.transaction.recurringType === 'WEEKLY' && 'Semanal'}
+                        {viewDialog.transaction.recurringType === 'MONTHLY' && 'Mensal'}
+                        {viewDialog.transaction.recurringType === 'YEARLY' && 'Anual'}
+                      </Badge>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Conta/Cartão */}
+              <div className="border-t pt-4">
+                <label className="text-sm font-medium text-muted-foreground">Forma de Pagamento</label>
+                <div className="mt-2 grid grid-cols-2 gap-4">
+                  {viewDialog.transaction.bankAccount && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Conta Bancária</p>
+                      <p className="text-base font-medium">
+                        {viewDialog.transaction.bankAccount.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {viewDialog.transaction.bankAccount.institution}
+                      </p>
+                    </div>
+                  )}
+                  {viewDialog.transaction.card && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cartão</p>
+                      <p className="text-base font-medium">
+                        {viewDialog.transaction.card.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        **** **** **** {viewDialog.transaction.card.lastDigits}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Notas */}
+              {viewDialog.transaction.notes && (
+                <div className="border-t pt-4">
+                  <label className="text-sm font-medium text-muted-foreground">Observações</label>
+                  <p className="text-base mt-2 text-muted-foreground">
+                    {viewDialog.transaction.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Metadados */}
+              <div className="border-t pt-4">
+                <label className="text-sm font-medium text-muted-foreground">Informações do Sistema</label>
+                <div className="mt-2 grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                  <div>
+                    <p>Criado em: {format(new Date(viewDialog.transaction.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                  </div>
+                  <div>
+                    <p>Atualizado em: {format(new Date(viewDialog.transaction.updatedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
