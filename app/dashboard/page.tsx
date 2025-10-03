@@ -34,13 +34,32 @@ export default function DashboardPage() {
   }, [])
 
   // Calcular métricas
-  const totalBalance = accounts.reduce((acc, account) => acc + Number(account.currentBalance), 0)
+  const totalBalance = accounts.reduce((acc, account) => {
+    const balance = Number(account.currentBalance)
+    console.log('💰 Conta:', account.name, 'Saldo:', balance)
+    return acc + balance
+  }, 0)
   
-  const incomeTransactions = transactions.filter(t => t.type === 'INCOME' && t.isPaid)
-  const expenseTransactions = transactions.filter(t => t.type === 'EXPENSE' && t.isPaid)
+  console.log('💰 Total de contas:', accounts.length)
+  console.log('💰 Saldo total calculado:', totalBalance)
   
-  const totalIncome = incomeTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
-  const totalExpenses = expenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
+  const incomeTransactions = transactions.filter(t => t.type === 'INCOME')
+  const expenseTransactions = transactions.filter(t => t.type === 'EXPENSE')
+  
+  const totalIncome = incomeTransactions.reduce((acc, t) => {
+    const amount = Number(t.amount)
+    console.log('💵 Receita:', t.description, 'Valor:', amount, 'Paga:', t.isPaid)
+    return acc + amount
+  }, 0)
+  
+  const totalExpenses = expenseTransactions.reduce((acc, t) => {
+    const amount = Number(t.amount)
+    console.log('💸 Despesa:', t.description, 'Valor:', amount, 'Paga:', t.isPaid)
+    return acc + amount
+  }, 0)
+  
+  console.log('💵 Total receitas:', totalIncome, '- Total transações:', incomeTransactions.length)
+  console.log('💸 Total despesas:', totalExpenses, '- Total transações:', expenseTransactions.length)
   
   const completedGoals = goals.filter(g => g.isCompleted).length
   const totalGoals = goals.length
