@@ -12,6 +12,8 @@ interface CardsState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   fetchCards: () => Promise<void>;
+  createCard: (data: Partial<Card>) => Promise<Card>;
+  deleteCard: (id: string) => Promise<void>;
 }
 
 export const useCardsStore = create<CardsState>((set) => ({
@@ -46,6 +48,48 @@ export const useCardsStore = create<CardsState>((set) => ({
       set({ cards: data, loading: false });
     } catch (error) {
       set({ error: (error as Error).message, loading: false });
+    }
+  },
+
+  createCard: async (data) => {
+    try {
+      const response = await fetch('/api/cards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao criar cartão');
+      }
+
+      const newCard = await response.json();
+      set((state) => ({ cards: [newCard, ...state.cards] }));
+      return newCard;
+    } catch (error) {
+      console.error('Erro ao criar cartão:', error);
+      throw error;
+    }
+  },
+
+  deleteCard: async (id) => {
+    try {
+      const response = await fetch(`/api/cards/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao deletar cartão');
+      }
+
+      set((state) => ({ cards: state.cards.filter(c => c.id !== id) }));
+    } catch (error) {
+      console.error('Erro ao deletar cartão:', error);
+      throw error;
     }
   },
 }));
