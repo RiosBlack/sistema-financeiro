@@ -7,6 +7,7 @@ import { ExpensesByCategory } from "@/components/charts/expenses-by-category"
 import { GoalsProgress } from "@/components/charts/goals-progress"
 import { ExpenseExpectations } from "@/components/charts/expense-expectations"
 import { RecentTransactions } from "@/components/recent-transactions"
+import { FutureBalance } from "@/components/future-balance"
 import { DollarSign, TrendingUp, TrendingDown, Target, Loader2 } from "lucide-react"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
 import { useTransactionsStore } from "@/store/use-transactions-store"
@@ -78,7 +79,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Cards de resumo */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         {/* Saldo Total */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -188,6 +189,16 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Saldo Futuro */}
+        <FutureBalance
+          currentBalance={totalBalance}
+          paidIncome={paidIncome}
+          pendingIncome={pendingIncome}
+          paidExpenses={paidExpenses}
+          pendingExpenses={pendingExpenses}
+          loading={loading}
+        />
       </div>
 
       {/* Gráficos */}
