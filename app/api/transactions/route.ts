@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     const where: Prisma.TransactionWhereInput = {
       userId: user.id,
+      currentInstallment: { not: 0 }, // Excluir transações pai (currentInstallment = 0)
       ...(type && { type: type as any }),
       ...(categoryId && { categoryId }),
       ...(bankAccountId && { bankAccountId }),
