@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TransactionForm } from "@/components/forms/transaction-form"
-import { Plus, Loader2, Trash2, Eye, Check, X } from "lucide-react"
+import { Plus, Loader2, Trash2, Eye, Check, X, Search } from "lucide-react"
 import { useTransactionsStore } from "@/store/use-transactions-store"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +36,7 @@ export default function TransactionsPage() {
   const [showForm, setShowForm] = useState(false)
   const [formType, setFormType] = useState<"INCOME" | "EXPENSE">("EXPENSE")
   const [activeTab, setActiveTab] = useState("all")
+  const [searchTerm, setSearchTerm] = useState("")
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; transaction: Transaction | null; deleteAll: boolean }>({
     open: false,
     transaction: null,
@@ -138,7 +140,21 @@ export default function TransactionsPage() {
     }
   }
 
-  const filteredTransactions = transactions
+  const filteredTransactions = transactions.filter(transaction => {
+    // Filtro por busca
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      const matchesSearch = 
+        transaction.description.toLowerCase().includes(searchLower) ||
+        transaction.category?.name.toLowerCase().includes(searchLower) ||
+        transaction.bankAccount?.name.toLowerCase().includes(searchLower) ||
+        transaction.card?.name.toLowerCase().includes(searchLower)
+      
+      if (!matchesSearch) return false
+    }
+    
+    return true
+  })
 
   return (
     <div className="space-y-6">
@@ -179,6 +195,17 @@ export default function TransactionsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Campo de busca */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input 
+          placeholder="Buscar transações..." 
+          className="pl-10"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
         <TabsList>
