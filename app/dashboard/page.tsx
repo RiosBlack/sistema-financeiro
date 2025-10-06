@@ -21,12 +21,12 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchAccounts()
     fetchGoals()
-    
+
     // Buscar transações do mês atual
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    
+
     setFilters({
       startDate: startOfMonth.toISOString().split('T')[0],
       endDate: endOfMonth.toISOString().split('T')[0],
@@ -40,31 +40,31 @@ export default function DashboardPage() {
     console.log('💰 Conta:', account.name, 'Saldo:', balance)
     return acc + balance
   }, 0)
-  
+
   console.log('💰 Total de contas:', accounts.length)
   console.log('💰 Saldo total calculado:', totalBalance)
-  
+
   // Receitas
   const incomeTransactions = transactions.filter(t => t.type === 'INCOME')
   const paidIncomeTransactions = incomeTransactions.filter(t => t.isPaid)
   const pendingIncomeTransactions = incomeTransactions.filter(t => !t.isPaid)
-  
+
   const totalIncome = incomeTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
   const paidIncome = paidIncomeTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
   const pendingIncome = pendingIncomeTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
-  
+
   // Despesas
   const expenseTransactions = transactions.filter(t => t.type === 'EXPENSE')
   const paidExpenseTransactions = expenseTransactions.filter(t => t.isPaid)
   const pendingExpenseTransactions = expenseTransactions.filter(t => !t.isPaid)
-  
+
   const totalExpenses = expenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
   const paidExpenses = paidExpenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
   const pendingExpenses = pendingExpenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
-  
+
   console.log('💵 Receitas - Total:', totalIncome, 'Pagas:', paidIncome, 'Pendentes:', pendingIncome)
   console.log('💸 Despesas - Total:', totalExpenses, 'Pagas:', paidExpenses, 'Pendentes:', pendingExpenses)
-  
+
   const completedGoals = goals.filter(g => g.isCompleted).length
   const totalGoals = goals.length
   const goalsPercentage = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0
@@ -79,7 +79,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Cards de resumo */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {/* Saldo Total */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -190,15 +190,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Saldo Futuro */}
-        <FutureBalance
-          currentBalance={totalBalance}
-          paidIncome={paidIncome}
-          pendingIncome={pendingIncome}
-          paidExpenses={paidExpenses}
-          pendingExpenses={pendingExpenses}
-          loading={loading}
-        />
       </div>
 
       {/* Gráficos */}
@@ -212,15 +203,29 @@ export default function DashboardPage() {
             <Overview />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Despesas por Categoria</CardTitle>
-            <CardDescription>Distribuição das despesas do mês atual</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ExpensesByCategory />
-          </CardContent>
-        </Card>
+
+        <div className="grid gap-6">
+          {/* Saldo Futuro */}
+          <FutureBalance
+            currentBalance={totalBalance}
+            paidIncome={paidIncome}
+            pendingIncome={pendingIncome}
+            paidExpenses={paidExpenses}
+            pendingExpenses={pendingExpenses}
+            loading={loading}
+          />
+
+          {/* Despesas por Categoria */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Despesas por Categoria</CardTitle>
+              <CardDescription>Distribuição das despesas do mês atual</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExpensesByCategory />
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
