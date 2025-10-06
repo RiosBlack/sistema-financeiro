@@ -1,12 +1,10 @@
-version: '3'
-
 services:
   postgres:
     image: postgres:latest
     container_name: financial_system_db
     restart: always
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

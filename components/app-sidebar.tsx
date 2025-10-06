@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, CreditCard, Target, TrendingUp, Settings, LogOut } from "lucide-react"
+import { Home, CreditCard, Target, TrendingUp, Settings, LogOut, Tag } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -37,6 +37,11 @@ const menuItems = [
     title: "Metas",
     url: "/dashboard/goals",
     icon: Target,
+  },
+  {
+    title: "Categorias",
+    url: "/dashboard/categories",
+    icon: Tag,
   },
 ]
 
