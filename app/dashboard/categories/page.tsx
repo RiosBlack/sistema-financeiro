@@ -41,11 +41,11 @@ export default function CategoriesPage() {
     category: null,
   })
 
-  const { 
-    categories, 
-    loading, 
-    fetchCategories, 
-    deleteCategory 
+  const {
+    categories,
+    loading,
+    fetchCategories,
+    deleteCategory
   } = useCategoriesStore()
   const { toast } = useToast()
 
@@ -145,7 +145,7 @@ export default function CategoriesPage() {
             Despesas ({expenseCategories.length})
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value={activeTab}>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {loading ? (
@@ -198,7 +198,7 @@ export default function CategoriesPage() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="flex gap-2 mt-4">
                       <Button
                         variant="outline"
@@ -249,7 +249,7 @@ export default function CategoriesPage() {
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{viewDialog.category.icon || "📁"}</span>
                 <div>
-                  <h3 
+                  <h3
                     className="text-xl font-semibold"
                     style={{ color: viewDialog.category.color || "#6b7280" }}
                   >
@@ -260,7 +260,7 @@ export default function CategoriesPage() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Transações</p>

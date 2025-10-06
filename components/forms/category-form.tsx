@@ -13,6 +13,8 @@ import { useCategoriesStore } from "@/store/use-categories-store"
 import { useToast } from "@/hooks/use-toast"
 import { Category, TransactionType } from "@/types/api"
 import { Loader2, X } from "lucide-react"
+import { ColorPicker } from "@/components/ui/color-picker"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const categorySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório").max(50, "Nome deve ter no máximo 50 caracteres"),
@@ -31,24 +33,18 @@ interface CategoryFormProps {
   onSuccess: () => void
 }
 
-const iconOptions = [
-  "🏠", "🍔", "🚗", "⛽", "🛒", "💊", "🎬", "🏋️", "📚", "🎮",
-  "👕", "✈️", "🏨", "🍕", "☕", "🍰", "🎁", "💡", "🔧", "📱",
-  "💻", "🎵", "📺", "🏥", "💳", "💰", "💵", "💸", "📊", "📈"
-]
-
-const colorOptions = [
-  { value: "#ef4444", label: "Vermelho" },
-  { value: "#f97316", label: "Laranja" },
-  { value: "#eab308", label: "Amarelo" },
-  { value: "#22c55e", label: "Verde" },
-  { value: "#06b6d4", label: "Ciano" },
-  { value: "#3b82f6", label: "Azul" },
-  { value: "#8b5cf6", label: "Roxo" },
-  { value: "#ec4899", label: "Rosa" },
-  { value: "#6b7280", label: "Cinza" },
-  { value: "#000000", label: "Preto" },
-]
+const iconCategories = {
+  "🏠 Casa e Moradia": ["🏠", "🏡", "🏢", "🏬", "🏪", "🏨", "🏩", "🏯", "🏰", "⛪"],
+  "🍔 Alimentação": ["🍔", "🍕", "🌮", "🌯", "🥗", "🍜", "🍝", "🍱", "🍣", "🍤", "🍰", "🧁", "🍪", "🍫", "☕", "🥤", "🍷", "🍺"],
+  "🚗 Transporte": ["🚗", "🚙", "🚌", "🚎", "🏎️", "🚓", "🚑", "🚒", "🚐", "🛻", "🚚", "🚛", "🚜", "🏍️", "🛵", "🚲", "✈️", "🚁", "🚢", "⛽"],
+  "🛒 Compras": ["🛒", "🛍️", "💳", "💰", "💵", "💸", "💎", "👕", "👗", "👠", "👜", "💼", "⌚", "📱", "💻", "📺", "🎮", "📚"],
+  "🏥 Saúde": ["🏥", "⚕️", "💊", "💉", "🩺", "🧬", "🦷", "👁️", "🦴", "🧠", "❤️", "🫀", "🫁", "🦵", "🦶"],
+  "🎬 Entretenimento": ["🎬", "🎭", "🎪", "🎨", "🎵", "🎶", "🎤", "🎧", "🎸", "🥁", "🎹", "🎺", "🎻", "🎲", "🃏", "🎯", "🎳", "🎮", "🕹️"],
+  "🏋️ Esportes": ["🏋️", "🏃", "🚴", "🏊", "🏄", "🏇", "⛷️", "🏂", "🏌️", "🏓", "🏸", "🏒", "🏑", "⚽", "🏀", "🏈", "⚾", "🎾", "🏐", "🏉"],
+  "📚 Educação": ["📚", "📖", "📝", "✏️", "🖊️", "🖋️", "✒️", "📏", "📐", "🧮", "🔬", "🔭", "📡", "💡", "🔍", "🔎", "🧪", "⚗️", "🧬"],
+  "🔧 Serviços": ["🔧", "🔨", "⚒️", "🛠️", "⚙️", "🔩", "⚖️", "🛡️", "🔫", "💣", "🧨", "🪓", "🪚", "🔪", "🗡️", "⚔️", "🛡️", "🏹", "🪃"],
+  "🎁 Outros": ["🎁", "🎀", "🎊", "🎉", "🎈", "🎂", "🍾", "🥂", "🍻", "🌹", "🌺", "🌻", "🌷", "🌸", "🌼", "🌿", "🍀", "🌱", "🌳", "🌲"]
+}
 
 export function CategoryForm({ category, onCancel, onSuccess }: CategoryFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -172,22 +168,36 @@ export function CategoryForm({ category, onCancel, onSuccess }: CategoryFormProp
           {/* Ícone */}
           <div className="space-y-2">
             <Label>Ícone</Label>
-            <div className="grid grid-cols-10 gap-2">
-              {iconOptions.map((icon) => (
-                <button
-                  key={icon}
-                  type="button"
-                  onClick={() => setValue("icon", icon)}
-                  className={`w-10 h-10 text-lg rounded border-2 flex items-center justify-center transition-colors ${
-                    selectedIcon === icon
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  {icon}
-                </button>
+            <Tabs defaultValue={Object.keys(iconCategories)[0]} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+                {Object.keys(iconCategories).map((categoryName) => (
+                  <TabsTrigger key={categoryName} value={categoryName} className="text-xs">
+                    {categoryName.split(' ')[0]}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {Object.entries(iconCategories).map(([categoryName, icons]) => (
+                <TabsContent key={categoryName} value={categoryName} className="mt-4">
+                  <div className="grid grid-cols-8 gap-2 max-h-48 overflow-y-auto">
+                    {icons.map((icon) => (
+                      <button
+                        key={icon}
+                        type="button"
+                        onClick={() => setValue("icon", icon)}
+                        className={`w-10 h-10 text-lg rounded border-2 flex items-center justify-center transition-colors ${
+                          selectedIcon === icon
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                        title={icon}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </TabsContent>
               ))}
-            </div>
+            </Tabs>
             <Input
               {...register("icon")}
               placeholder="Ou digite um emoji"
@@ -197,27 +207,10 @@ export function CategoryForm({ category, onCancel, onSuccess }: CategoryFormProp
 
           {/* Cor */}
           <div className="space-y-2">
-            <Label>Cor</Label>
-            <div className="grid grid-cols-5 gap-2">
-              {colorOptions.map((color) => (
-                <button
-                  key={color.value}
-                  type="button"
-                  onClick={() => setValue("color", color.value)}
-                  className={`w-8 h-8 rounded border-2 transition-all ${
-                    selectedColor === color.value
-                      ? "border-gray-800 scale-110"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  title={color.label}
-                />
-              ))}
-            </div>
-            <Input
-              {...register("color")}
-              placeholder="#6b7280"
-              className="mt-2"
+            <ColorPicker
+              value={selectedColor || "#6b7280"}
+              onChange={(color) => setValue("color", color)}
+              label="Cor"
             />
           </div>
 
