@@ -70,50 +70,9 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
     }
   }, [value])
 
-  // Forçar re-render do canvas quando o componente monta
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const canvas = canvasRef.current
-      if (canvas) {
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          const size = 200
-          canvas.width = size
-          canvas.height = size
-          const centerX = size / 2
-          const centerY = size / 2
-          const radius = 80
 
-          // Desenhar círculo de matiz
-          for (let angle = 0; angle < 360; angle++) {
-            const startAngle = (angle - 1) * Math.PI / 180
-            const endAngle = angle * Math.PI / 180
-            
-            ctx.beginPath()
-            ctx.arc(centerX, centerY, radius, startAngle, endAngle)
-            ctx.lineWidth = 20
-            ctx.strokeStyle = `hsl(${angle}, 100%, 50%)`
-            ctx.stroke()
-          }
-
-          // Desenhar círculo interno (saturação/brilho)
-          const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius - 30)
-          gradient.addColorStop(0, 'white')
-          gradient.addColorStop(1, `hsl(${hue}, 100%, 50%)`)
-          
-          ctx.beginPath()
-          ctx.arc(centerX, centerY, radius - 30, 0, 2 * Math.PI)
-          ctx.fillStyle = gradient
-          ctx.fill()
-        }
-      }
-    }, 100)
-    
-    return () => clearTimeout(timer)
-  }, [hue])
-
-  // Desenhar o círculo de cores
-  useEffect(() => {
+  // Função para desenhar o círculo de cores
+  const drawColorWheel = () => {
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -127,11 +86,14 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
     const centerY = size / 2
     const radius = 80
 
+    // Limpar canvas
+    ctx.clearRect(0, 0, size, size)
+
     // Desenhar círculo de matiz
     for (let angle = 0; angle < 360; angle++) {
       const startAngle = (angle - 1) * Math.PI / 180
       const endAngle = angle * Math.PI / 180
-
+      
       ctx.beginPath()
       ctx.arc(centerX, centerY, radius, startAngle, endAngle)
       ctx.lineWidth = 20
@@ -143,12 +105,26 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
     const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius - 30)
     gradient.addColorStop(0, 'white')
     gradient.addColorStop(1, `hsl(${hue}, 100%, 50%)`)
-
+    
     ctx.beginPath()
     ctx.arc(centerX, centerY, radius - 30, 0, 2 * Math.PI)
     ctx.fillStyle = gradient
     ctx.fill()
+  }
+
+  // Desenhar o círculo de cores
+  useEffect(() => {
+    drawColorWheel()
   }, [hue])
+
+  // Desenhar quando o componente monta
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      drawColorWheel()
+    }, 50)
+    
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -195,7 +171,15 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
   return (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Popover open={isOpen} onOpenChange={(open) => {
+        setIsOpen(open)
+        if (open) {
+          // Forçar re-render do canvas quando o popover abrir
+          setTimeout(() => {
+            drawColorWheel()
+          }, 100)
+        }
+      }}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"

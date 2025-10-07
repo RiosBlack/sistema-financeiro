@@ -117,8 +117,8 @@ export function CategoryForm({ category, onCancel, onSuccess }: CategoryFormProp
               {category ? "Editar Categoria" : "Nova Categoria"}
             </CardTitle>
             <CardDescription>
-              {category 
-                ? "Atualize as informações da categoria" 
+              {category
+                ? "Atualize as informações da categoria"
                 : "Adicione uma nova categoria personalizada"
               }
             </CardDescription>
@@ -186,11 +186,10 @@ export function CategoryForm({ category, onCancel, onSuccess }: CategoryFormProp
                           key={icon}
                           type="button"
                           onClick={() => setValue("icon", icon)}
-                          className={`w-10 h-10 text-lg rounded border-2 flex items-center justify-center transition-colors ${
-                            selectedIcon === icon
-                              ? "border-blue-500 bg-blue-50"
-                              : "border-gray-200 hover:border-gray-300"
-                          }`}
+                          className={`w-10 h-10 text-lg rounded border-2 flex items-center justify-center transition-colors ${selectedIcon === icon
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                            }`}
                           title={icon}
                         >
                           {icon}
@@ -222,7 +221,7 @@ export function CategoryForm({ category, onCancel, onSuccess }: CategoryFormProp
             <Label>Preview</Label>
             <div className="flex items-center gap-2 p-3 border rounded-lg">
               <span className="text-lg">{selectedIcon || "📁"}</span>
-              <span 
+              <span
                 className="font-medium"
                 style={{ color: selectedColor }}
               >
