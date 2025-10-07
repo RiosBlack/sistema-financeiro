@@ -3,6 +3,7 @@
 import { Home, CreditCard, Target, TrendingUp, Settings, LogOut, Tag } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { signOut } from "next-auth/react"
 
 import {
   Sidebar,
@@ -48,6 +49,13 @@ const menuItems = [
 export function AppSidebar() {
   const pathname = usePathname()
 
+  const handleLogout = async () => {
+    await signOut({ 
+      callbackUrl: '/login',
+      redirect: true 
+    })
+  }
+
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
@@ -91,11 +99,9 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/login">
-                <LogOut className="h-4 w-4" />
-                <span>Sair</span>
-              </Link>
+            <SidebarMenuButton onClick={handleLogout} className="text-red-600 hover:text-red-700">
+              <LogOut className="h-4 w-4" />
+              <span>Sair</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
