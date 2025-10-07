@@ -186,11 +186,10 @@ export function CategoryForm({ category, onCancel, onSuccess }: CategoryFormProp
                           key={icon}
                           type="button"
                           onClick={() => setValue("icon", icon)}
-                          className={`w-10 h-10 text-lg rounded flex items-center justify-center transition-all ${
-                            selectedIcon === icon
-                              ? "border-2 border-blue-500 bg-blue-50"
-                              : "border-2 border-transparent hover:border-gray-300"
-                          }`}
+                          className={`w-10 h-10 text-lg rounded flex items-center justify-center transition-all ${selectedIcon === icon
+                            ? "border-2 border-blue-500"
+                            : "border-2 border-transparent hover:border-gray-300"
+                            }`}
                           title={icon}
                         >
                           {icon}
