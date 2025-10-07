@@ -70,6 +70,48 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
     }
   }, [value])
 
+  // Forçar re-render do canvas quando o componente monta
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const canvas = canvasRef.current
+      if (canvas) {
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          const size = 200
+          canvas.width = size
+          canvas.height = size
+          const centerX = size / 2
+          const centerY = size / 2
+          const radius = 80
+
+          // Desenhar círculo de matiz
+          for (let angle = 0; angle < 360; angle++) {
+            const startAngle = (angle - 1) * Math.PI / 180
+            const endAngle = angle * Math.PI / 180
+            
+            ctx.beginPath()
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle)
+            ctx.lineWidth = 20
+            ctx.strokeStyle = `hsl(${angle}, 100%, 50%)`
+            ctx.stroke()
+          }
+
+          // Desenhar círculo interno (saturação/brilho)
+          const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius - 30)
+          gradient.addColorStop(0, 'white')
+          gradient.addColorStop(1, `hsl(${hue}, 100%, 50%)`)
+          
+          ctx.beginPath()
+          ctx.arc(centerX, centerY, radius - 30, 0, 2 * Math.PI)
+          ctx.fillStyle = gradient
+          ctx.fill()
+        }
+      }
+    }, 100)
+    
+    return () => clearTimeout(timer)
+  }, [hue])
+
   // Desenhar o círculo de cores
   useEffect(() => {
     const canvas = canvasRef.current
@@ -89,7 +131,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
     for (let angle = 0; angle < 360; angle++) {
       const startAngle = (angle - 1) * Math.PI / 180
       const endAngle = angle * Math.PI / 180
-      
+
       ctx.beginPath()
       ctx.arc(centerX, centerY, radius, startAngle, endAngle)
       ctx.lineWidth = 20
@@ -101,7 +143,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
     const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius - 30)
     gradient.addColorStop(0, 'white')
     gradient.addColorStop(1, `hsl(${hue}, 100%, 50%)`)
-    
+
     ctx.beginPath()
     ctx.arc(centerX, centerY, radius - 30, 0, 2 * Math.PI)
     ctx.fillStyle = gradient
@@ -117,7 +159,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
     const y = e.clientY - rect.top
     const centerX = canvas.width / 2
     const centerY = canvas.height / 2
-    
+
     const dx = x - centerX
     const dy = y - centerY
     const distance = Math.sqrt(dx * dx + dy * dy)
@@ -182,7 +224,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
                 onClick={handleCanvasClick}
               />
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Label className="w-16 text-sm">HEX:</Label>
@@ -193,7 +235,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
                   placeholder="#000000"
                 />
               </div>
-              
+
               <div className="grid grid-cols-3 gap-2 text-sm">
                 <div>
                   <Label className="text-xs">Matiz</Label>

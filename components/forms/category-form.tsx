@@ -168,32 +168,35 @@ export function CategoryForm({ category, onCancel, onSuccess }: CategoryFormProp
           {/* Ícone */}
           <div className="space-y-2">
             <Label>Ícone</Label>
-            <Tabs defaultValue={Object.keys(iconCategories)[0]} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+            <Tabs defaultValue="🏠 Casa e Moradia" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 h-auto">
                 {Object.keys(iconCategories).map((categoryName) => (
-                  <TabsTrigger key={categoryName} value={categoryName} className="text-xs">
-                    {categoryName.split(' ')[0]}
+                  <TabsTrigger key={categoryName} value={categoryName} className="text-xs p-2">
+                    {categoryName}
                   </TabsTrigger>
                 ))}
               </TabsList>
               {Object.entries(iconCategories).map(([categoryName, icons]) => (
                 <TabsContent key={categoryName} value={categoryName} className="mt-4">
-                  <div className="grid grid-cols-8 gap-2 max-h-48 overflow-y-auto">
-                    {icons.map((icon) => (
-                      <button
-                        key={icon}
-                        type="button"
-                        onClick={() => setValue("icon", icon)}
-                        className={`w-10 h-10 text-lg rounded border-2 flex items-center justify-center transition-colors ${
-                          selectedIcon === icon
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                        title={icon}
-                      >
-                        {icon}
-                      </button>
-                    ))}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">{categoryName}</p>
+                    <div className="grid grid-cols-8 gap-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                      {icons.map((icon) => (
+                        <button
+                          key={icon}
+                          type="button"
+                          onClick={() => setValue("icon", icon)}
+                          className={`w-10 h-10 text-lg rounded border-2 flex items-center justify-center transition-colors ${
+                            selectedIcon === icon
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                          title={icon}
+                        >
+                          {icon}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </TabsContent>
               ))}
