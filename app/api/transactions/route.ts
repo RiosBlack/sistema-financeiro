@@ -20,9 +20,31 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
 
+    // Buscar família do usuário
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
     const where: Prisma.TransactionWhereInput = {
-      userId: user.id,
       currentInstallment: { not: 0 }, // Excluir transações pai (currentInstallment = 0)
+      OR: [
+        // Transações próprias
+        { userId: user.id },
+        // Transações compartilhadas por membros da família
+        familyMember
+          ? {
+              isShared: true,
+              user: {
+                familyMembers: {
+                  some: {
+                    familyId: familyMember.familyId,
+                  },
+                },
+              },
+            }
+          : {},
+      ],
       ...(type && { type: type as any }),
       ...(categoryId && { categoryId }),
       ...(bankAccountId && { bankAccountId }),
@@ -40,6 +62,13 @@ export async function GET(request: NextRequest) {
       prisma.transaction.findMany({
         where,
         include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
           category: true,
           bankAccount: {
             select: {
@@ -106,6 +135,7 @@ export async function POST(request: NextRequest) {
       recurringType,
       installments,
       notes,
+      isShared = false, // Compartilhar com família
     } = body;
 
     // Validações
@@ -178,6 +208,7 @@ export async function POST(request: NextRequest) {
           isRecurring: false,
           installments,
           currentInstallment: 0, // Transação pai
+          isShared,
           userId: user.id,
           notes: notes || undefined,
         },
@@ -209,6 +240,7 @@ export async function POST(request: NextRequest) {
             isRecurring: false,
             installments,
             currentInstallment: i,
+            isShared,
             parentTransactionId: parentTransaction.id,
             userId: user.id,
             notes: notes || undefined,
@@ -242,6 +274,7 @@ export async function POST(request: NextRequest) {
         recurringType: recurringType || undefined,
         installments: 1,
         currentInstallment: 1,
+        isShared,
         userId: user.id,
         notes: notes || undefined,
       },
