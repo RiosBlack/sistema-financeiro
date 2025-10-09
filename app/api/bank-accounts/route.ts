@@ -2,21 +2,52 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthenticatedUser, unauthorizedResponse, errorResponse, successResponse } from "@/lib/api-auth";
 
-// GET - Listar todas as contas do usuário
+// GET - Listar todas as contas do usuário (próprias e compartilhadas por família)
 export async function GET() {
   try {
     const user = await getAuthenticatedUser();
     if (!user) return unauthorizedResponse();
 
+    // Buscar família do usuário
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
     const accounts = await prisma.bankAccount.findMany({
       where: {
-        users: {
-          some: {
-            userId: user.id,
+        OR: [
+          // Contas onde o usuário é membro direto
+          {
+            users: {
+              some: {
+                userId: user.id,
+              },
+            },
           },
-        },
+          // Contas compartilhadas por membros da família
+          familyMember
+            ? {
+                isShared: true,
+                createdBy: {
+                  familyMembers: {
+                    some: {
+                      familyId: familyMember.familyId,
+                    },
+                  },
+                },
+              }
+            : {},
+        ],
       },
       include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         users: {
           include: {
             user: {
@@ -61,6 +92,7 @@ export async function POST(request: NextRequest) {
       type,
       initialBalance,
       color,
+      isShared = false, // Compartilhar com família
       sharedWithUserIds = [], // IDs de usuários para compartilhar a conta
     } = body;
 
@@ -78,6 +110,7 @@ export async function POST(request: NextRequest) {
         initialBalance: initialBalance || 0,
         currentBalance: initialBalance || 0,
         color,
+        isShared,
         createdById: user.id,
         users: {
           create: [

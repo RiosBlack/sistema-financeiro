@@ -2,17 +2,46 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthenticatedUser, unauthorizedResponse, errorResponse, successResponse } from "@/lib/api-auth";
 
-// GET - Listar todos os cartões do usuário
+// GET - Listar todos os cartões do usuário (próprios e compartilhados por família)
 export async function GET() {
   try {
     const user = await getAuthenticatedUser();
     if (!user) return unauthorizedResponse();
 
+    // Buscar família do usuário
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
     const cards = await prisma.card.findMany({
       where: {
-        userId: user.id,
+        OR: [
+          // Cartões próprios
+          { userId: user.id },
+          // Cartões compartilhados por membros da família
+          familyMember
+            ? {
+                isShared: true,
+                user: {
+                  familyMembers: {
+                    some: {
+                      familyId: familyMember.familyId,
+                    },
+                  },
+                },
+              }
+            : {},
+        ],
       },
       include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         bankAccount: {
           select: {
             id: true,
@@ -55,6 +84,7 @@ export async function POST(request: NextRequest) {
       closingDay,
       color,
       bankAccountId,
+      isShared = false, // Compartilhar com família
     } = body;
 
     // Validações
@@ -90,6 +120,7 @@ export async function POST(request: NextRequest) {
         dueDay,
         closingDay,
         color,
+        isShared,
         userId: user.id,
         bankAccountId,
       },

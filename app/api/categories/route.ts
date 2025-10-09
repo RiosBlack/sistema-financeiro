@@ -11,6 +11,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type"); // INCOME ou EXPENSE
 
+    // Buscar família do usuário
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
     const categories = await prisma.category.findMany({
       where: {
         AND: [
@@ -18,6 +24,19 @@ export async function GET(request: NextRequest) {
             OR: [
               { isDefault: true },
               { createdById: user.id },
+              // Categorias compartilhadas por membros da família
+              familyMember
+                ? {
+                    isShared: true,
+                    createdBy: {
+                      familyMembers: {
+                        some: {
+                          familyId: familyMember.familyId,
+                        },
+                      },
+                    },
+                  }
+                : {},
             ],
           },
           ...(type ? [{ type: type as any }] : []),
@@ -51,7 +70,7 @@ export async function POST(request: NextRequest) {
     if (!user) return unauthorizedResponse();
 
     const body = await request.json();
-    const { name, icon, color, type } = body;
+    const { name, icon, color, type, isShared = false } = body;
 
     // Validações
     if (!name || !type) {
@@ -84,6 +103,7 @@ export async function POST(request: NextRequest) {
         icon,
         color,
         type,
+        isShared,
         createdById: user.id,
         isDefault: false,
       },
