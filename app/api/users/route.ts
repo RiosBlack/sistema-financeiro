@@ -4,7 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// GET - Listar todos os usuários
+// GET - Listar todos os usuários (apenas admin)
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -13,6 +13,19 @@ export async function GET() {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
+      );
+    }
+
+    // Verificar se o usuário é admin
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { role: true },
+    });
+
+    if (!user || user.role?.name?.toLowerCase() !== "admin") {
+      return NextResponse.json(
+        { error: "Acesso negado. Apenas administradores podem acessar esta rota." },
+        { status: 403 }
       );
     }
 
@@ -63,6 +76,19 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
+      );
+    }
+
+    // Verificar se o usuário é admin
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { role: true },
+    });
+
+    if (!user || user.role?.name?.toLowerCase() !== "admin") {
+      return NextResponse.json(
+        { error: "Acesso negado. Apenas administradores podem criar usuários." },
+        { status: 403 }
       );
     }
 

@@ -4,6 +4,15 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/authOptions";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+// Helper para verificar se o usuário é admin
+async function checkIsAdmin(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { role: true },
+  });
+  return user?.role?.name?.toLowerCase() === "admin";
+}
+
 // GET - Buscar usuário específico
 export async function GET(
   request: Request,
@@ -16,6 +25,15 @@ export async function GET(
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
+      );
+    }
+
+    // Verificar se é admin
+    const isAdmin = await checkIsAdmin(session.user.id!);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Acesso negado. Apenas administradores." },
+        { status: 403 }
       );
     }
 
@@ -74,6 +92,15 @@ export async function PATCH(
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
+      );
+    }
+
+    // Verificar se é admin
+    const isAdmin = await checkIsAdmin(session.user.id!);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Acesso negado. Apenas administradores." },
+        { status: 403 }
       );
     }
 
@@ -161,6 +188,15 @@ export async function DELETE(
       return NextResponse.json(
         { error: "Não autorizado" },
         { status: 401 }
+      );
+    }
+
+    // Verificar se é admin
+    const isAdmin = await checkIsAdmin(session.user.id!);
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Acesso negado. Apenas administradores." },
+        { status: 403 }
       );
     }
 

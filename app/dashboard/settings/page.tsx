@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Edit, Users, Mail, Calendar } from "lucide-react";
+import { Plus, Trash2, Edit, Users, Mail, Calendar, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +37,8 @@ import { useUsersStore, type User } from "@/store/use-users-store";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const { users, isLoading, fetchUsers, deleteUser } = useUsersStore();
   const [showUserForm, setShowUserForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>();
@@ -46,9 +50,51 @@ export default function SettingsPage() {
     user: null,
   });
 
+  // Verificar se o usuário é admin
   useEffect(() => {
+    if (status === "loading") return;
+    
+    if (!session?.user) {
+      router.push("/login");
+      return;
+    }
+
+    // Verificar se o role é admin (assumindo que o nome do role é "Admin" ou "ADMIN")
+    const userRole = (session.user as any).role?.name;
+    if (userRole?.toLowerCase() !== "admin") {
+      router.push("/dashboard");
+      return;
+    }
+
     fetchUsers();
-  }, [fetchUsers]);
+  }, [fetchUsers, status, session, router]);
+
+  // Mostrar loading enquanto verifica autenticação
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  // Verificar se tem permissão
+  const userRole = (session?.user as any)?.role?.name;
+  if (userRole?.toLowerCase() !== "admin") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <AlertTriangle className="h-16 w-16 text-destructive" />
+        <h2 className="text-2xl font-bold">Acesso Negado</h2>
+        <p className="text-muted-foreground text-center max-w-md">
+          Você não tem permissão para acessar esta página. Apenas administradores podem gerenciar usuários do sistema.
+        </p>
+        <Button onClick={() => router.push("/dashboard")}>
+          Voltar ao Dashboard
+        </Button>
+      </div>
+    );
+  }
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
