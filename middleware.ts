@@ -1,46 +1,53 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Permitir rotas de autenticação do NextAuth
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
+  }
+
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
-  })
-
-  const { pathname } = request.nextUrl
+  });
 
   // Lista de rotas públicas que não requerem autenticação
-  const publicRoutes = ['/login', '/register']
-  const isPublicRoute = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'))
+  const publicRoutes = ["/login", "/register"];
+  const isPublicRoute = publicRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
 
   // Se não estiver autenticado
   if (!token) {
     // Se estiver tentando acessar a raiz, redireciona para login
-    if (pathname === '/') {
-      const loginUrl = new URL('/login', request.url)
-      return NextResponse.redirect(loginUrl)
+    if (pathname === "/") {
+      const loginUrl = new URL("/login", request.url);
+      return NextResponse.redirect(loginUrl);
     }
 
     // Se não for rota pública, redireciona para login
     if (!isPublicRoute) {
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(loginUrl)
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
     }
 
     // Se for rota pública, permite acesso
-    return NextResponse.next()
+    return NextResponse.next();
   }
 
   // Se estiver autenticado e tentar acessar login ou raiz, redireciona para dashboard
-  if (pathname === '/login' || pathname === '/' || pathname === '/register') {
-    const dashboardUrl = new URL('/dashboard', request.url)
-    return NextResponse.redirect(dashboardUrl)
+  if (pathname === "/login" || pathname === "/" || pathname === "/register") {
+    const dashboardUrl = new URL("/dashboard", request.url);
+    return NextResponse.redirect(dashboardUrl);
   }
 
   // Se estiver autenticado e acessar qualquer outra rota, permite o acesso
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
 // Configuração das rotas que serão protegidas pelo middleware
@@ -54,6 +61,10 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public assets
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)',
+    "/",
+    "/dashboard/:path*",
+    "/api/:path*",
+    "/login",
+    "/register",
   ],
-}
+};
