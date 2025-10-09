@@ -24,7 +24,7 @@ declare module "next-auth" {
         description: string;
       };
       image?: string | null;
-    }
+    };
   }
 }
 

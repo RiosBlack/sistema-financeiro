@@ -53,7 +53,7 @@ export default function SettingsPage() {
   // Verificar se o usuário é admin
   useEffect(() => {
     if (status === "loading") return;
-    
+
     if (!session?.user) {
       router.push("/login");
       return;
