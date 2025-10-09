@@ -60,6 +60,12 @@ model User {
   createdGoals        Goal[]            @relation("GoalCreator")
   budgets             Budget[]
 
+  // Relacionamentos de família
+  createdFamilies     Family[]           @relation("FamilyCreator")
+  familyMembers       FamilyMember[]
+  invitationsSent     FamilyInvitation[] @relation("InvitationsSent")
+  invitationsReceived FamilyInvitation[] @relation("InvitationsReceived")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -91,6 +97,7 @@ model BankAccount {
   currentBalance Decimal     @default(0) @db.Decimal(10, 2)
   color          String? // Para identificação visual
   isActive       Boolean     @default(true)
+  isShared       Boolean     @default(false) // Compartilhado com família
 
   createdById String
   createdBy   User   @relation("BankAccountCreator", fields: [createdById], references: [id], onDelete: Cascade)
@@ -135,6 +142,7 @@ model Card {
   closingDay Int? // Dia do fechamento da fatura
   color      String?
   isActive   Boolean    @default(true)
+  isShared   Boolean    @default(false) // Compartilhado com família
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -159,6 +167,7 @@ model Category {
   color     String?
   type      TransactionType // INCOME ou EXPENSE
   isDefault Boolean         @default(false) // Categorias padrão do sistema
+  isShared  Boolean         @default(false) // Compartilhado com família
 
   createdById String?
   createdBy   User?   @relation("CategoryCreator", fields: [createdById], references: [id], onDelete: Cascade)
@@ -187,6 +196,7 @@ model Transaction {
   recurringType      RecurringType?
   installments       Int?           @default(1)
   currentInstallment Int?           @default(1)
+  isShared           Boolean        @default(false) // Compartilhado com família
 
   // Relacionamentos
   userId String
@@ -284,6 +294,63 @@ model Budget {
   @@index([month, year])
 }
 
+// ==================== MODELOS DE FAMÍLIA ====================
+
+// Família - Grupo familiar para compartilhamento de dados
+model Family {
+  id          String   @id @default(cuid())
+  name        String
+  createdById String
+  createdBy   User     @relation("FamilyCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  members     FamilyMember[]
+  invitations FamilyInvitation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdById])
+}
+
+// Membro da Família
+model FamilyMember {
+  id       String     @id @default(cuid())
+  familyId String
+  userId   String
+  role     FamilyRole @default(MEMBER)
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([familyId, userId])
+  @@index([familyId])
+  @@index([userId])
+}
+
+// Convite para Família
+model FamilyInvitation {
+  id         String           @id @default(cuid())
+  familyId   String
+  invitedId  String
+  invitedBy  String
+  status     InvitationStatus @default(PENDING)
+
+  family  Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  invited User   @relation("InvitationsReceived", fields: [invitedId], references: [id], onDelete: Cascade)
+  inviter User   @relation("InvitationsSent", fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+
+  @@unique([familyId, invitedId])
+  @@index([familyId])
+  @@index([invitedId])
+  @@index([invitedBy])
+  @@index([status])
+}
+
 // ==================== ENUMS ====================
 
 enum AccountType {
@@ -323,4 +390,15 @@ enum RecurringType {
   WEEKLY // Semanal
   MONTHLY // Mensal
   YEARLY // Anual
+}
+
+enum FamilyRole {
+  OWNER // Criador da família, pode remover membros
+  MEMBER // Membro da família, apenas visualização
+}
+
+enum InvitationStatus {
+  PENDING // Aguardando resposta
+  ACCEPTED // Aceito
+  REJECTED // Rejeitado
 }
