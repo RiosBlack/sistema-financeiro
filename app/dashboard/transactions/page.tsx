@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TransactionForm } from "@/components/forms/transaction-form"
-import { Plus, Loader2, Trash2, Eye, Check, X, Search } from "lucide-react"
+import { Plus, Loader2, Trash2, Eye, Check, X, Search, Users } from "lucide-react"
 import { useTransactionsStore } from "@/store/use-transactions-store"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { useSession } from "next-auth/react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Transaction } from "@/types/api"
 
 export default function TransactionsPage() {
+  const { data: session } = useSession()
   const [showForm, setShowForm] = useState(false)
   const [formType, setFormType] = useState<"INCOME" | "EXPENSE">("EXPENSE")
   const [activeTab, setActiveTab] = useState("all")
@@ -259,13 +261,26 @@ export default function TransactionsPage() {
                           {format(new Date(transaction.date), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
-                          <div>
+                          <div className="space-y-1">
                             <p className="font-medium">{transaction.description}</p>
                             {transaction.installments && transaction.installments > 1 && (
                               <p className="text-xs text-muted-foreground">
                                 Parcela {transaction.currentInstallment}/{transaction.installments}
                               </p>
                             )}
+                            <div className="flex items-center gap-2">
+                              {transaction.isShared && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Users className="h-3 w-3 mr-1" />
+                                  Compartilhado
+                                </Badge>
+                              )}
+                              {transaction.user && transaction.user.id !== session?.user?.id && (
+                                <span className="text-xs text-muted-foreground">
+                                  Criado por {transaction.user.name || transaction.user.email}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -310,9 +325,13 @@ export default function TransactionsPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleTogglePaid(transaction)}
-                              title={transaction.isPaid ? 
-                                (transaction.type === 'INCOME' ? 'Marcar como não recebida' : 'Marcar como não paga') : 
-                                (transaction.type === 'INCOME' ? 'Marcar como recebida' : 'Marcar como paga')
+                              disabled={transaction.user && transaction.user.id !== session?.user?.id}
+                              title={
+                                transaction.user && transaction.user.id !== session?.user?.id
+                                  ? "Você não pode alterar transações de outros membros"
+                                  : transaction.isPaid ? 
+                                    (transaction.type === 'INCOME' ? 'Marcar como não recebida' : 'Marcar como não paga') : 
+                                    (transaction.type === 'INCOME' ? 'Marcar como recebida' : 'Marcar como paga')
                               }
                             >
                               {transaction.isPaid ? (
@@ -325,7 +344,12 @@ export default function TransactionsPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDelete(transaction)}
-                              title="Deletar transação"
+                              disabled={transaction.user && transaction.user.id !== session?.user?.id}
+                              title={
+                                transaction.user && transaction.user.id !== session?.user?.id
+                                  ? "Você não pode excluir transações de outros membros"
+                                  : "Deletar transação"
+                              }
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
