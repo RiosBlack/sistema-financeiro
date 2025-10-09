@@ -3,14 +3,17 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { AccountForm } from "@/components/forms/account-form"
 import { CardForm } from "@/components/forms/card-form"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Users } from "lucide-react"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
 import { useCardsStore } from "@/store/use-cards-store"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useSession } from "next-auth/react"
 
 export default function AccountsPage() {
+  const { data: session } = useSession()
   const [showAccountForm, setShowAccountForm] = useState(false)
   const [showCardForm, setShowCardForm] = useState(false)
   
@@ -151,7 +154,22 @@ export default function AccountsPage() {
                 <Card key={account.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{account.name}</CardTitle>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{account.name}</CardTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                          {account.isShared && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Users className="h-3 w-3 mr-1" />
+                              Compartilhado
+                            </Badge>
+                          )}
+                          {account.createdBy && account.createdBy.id !== session?.user?.id && (
+                            <span className="text-xs text-muted-foreground">
+                              Criado por {account.createdBy.name || account.createdBy.email}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       {account.color && (
                         <div 
                           className="w-4 h-4 rounded-full" 
@@ -208,7 +226,22 @@ export default function AccountsPage() {
                 <Card key={card.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{card.name}</CardTitle>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{card.name}</CardTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                          {card.isShared && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Users className="h-3 w-3 mr-1" />
+                              Compartilhado
+                            </Badge>
+                          )}
+                          {card.user && card.user.id !== session?.user?.id && (
+                            <span className="text-xs text-muted-foreground">
+                              Criado por {card.user.name || card.user.email}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       {card.color && (
                         <div 
                           className="w-4 h-4 rounded-full" 
