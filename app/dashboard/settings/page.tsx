@@ -59,8 +59,8 @@ export default function SettingsPage() {
       return;
     }
 
-    // Verificar se o role é admin (assumindo que o nome do role é "Admin" ou "ADMIN")
-    const userRole = (session.user as any).role?.name;
+    // Verificar se o role é admin
+    const userRole = session.user?.role?.name;
     if (userRole?.toLowerCase() !== "admin") {
       router.push("/dashboard");
       return;
@@ -80,7 +80,7 @@ export default function SettingsPage() {
   }
 
   // Verificar se tem permissão
-  const userRole = (session?.user as any)?.role?.name;
+  const userRole = session?.user?.role?.name;
   if (userRole?.toLowerCase() !== "admin") {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
