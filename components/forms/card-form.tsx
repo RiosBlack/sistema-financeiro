@@ -5,10 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCardsStore } from "@/store/use-cards-store"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
+import { useFamilyStore } from "@/store/use-family-store"
 import { useToast } from "@/hooks/use-toast"
 import { useEffect } from "react"
 
@@ -22,6 +24,7 @@ const cardSchema = z.object({
   closingDay: z.number().min(1).max(31).optional(),
   bankAccountId: z.string().optional(),
   color: z.string().optional(),
+  isShared: z.boolean().optional().default(false),
 })
 
 type CardFormData = z.infer<typeof cardSchema>
@@ -35,10 +38,12 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
   const { toast } = useToast()
   const { createCard } = useCardsStore()
   const { accounts, fetchAccounts } = useBankAccountsStore()
+  const { family, fetchFamily } = useFamilyStore()
 
   useEffect(() => {
     fetchAccounts()
-  }, [])
+    fetchFamily()
+  }, [fetchAccounts, fetchFamily])
 
   const form = useForm<CardFormData>({
     resolver: zodResolver(cardSchema),
@@ -48,6 +53,7 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
       type: "CREDIT",
       brand: "",
       limit: undefined,
+      isShared: false,
       dueDay: undefined,
       closingDay: undefined,
       bankAccountId: "",
@@ -310,6 +316,29 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
             )}
           />
         </div>
+
+        {family && (
+          <FormField
+            control={form.control}
+            name="isShared"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Compartilhar com Família</FormLabel>
+                  <FormDescription>
+                    Permitir que todos os membros da família {family.name} visualizem este cartão
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex gap-2 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
