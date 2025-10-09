@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Permitir rotas de autenticação do NextAuth
-  if (pathname.startsWith('/api/auth')) {
+  if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 

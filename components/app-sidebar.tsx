@@ -44,6 +44,11 @@ const menuItems = [
     url: "/dashboard/categories",
     icon: Tag,
   },
+  {
+    title: "Configurações",
+    url: "/dashboard/settings",
+    icon: Settings,
+  },
 ]
 
 export function AppSidebar() {
@@ -90,14 +95,6 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/dashboard/settings">
-                <Settings className="h-4 w-4" />
-                <span>Configurações</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={handleLogout} className="text-red-600 hover:text-red-700">
               <LogOut className="h-4 w-4" />

@@ -75,22 +75,11 @@ DATABASE_URL="postgresql://postgres:password@localhost:5432/financial_system"
 
 # NextAuth
 NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key-here-generate-with-openssl-rand-base64-32"
+NEXTAUTH_SECRET="your-secret-key"
 
 # Google OAuth (opcional)
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
-```
-
-**⚠️ IMPORTANTE:** Gere uma chave secreta segura para `NEXTAUTH_SECRET`:
-```bash
-openssl rand -base64 32
-```
-
-Você também pode copiar o arquivo de exemplo:
-```bash
-cp env.example .env
-# Depois edite o .env com suas configurações
 ```
 
 ### 4. Configure o banco de dados
@@ -187,47 +176,6 @@ pnpm prisma migrate   # Executar migrações
 pnpm prisma db seed   # Popular banco
 ```
 
-## 🔍 Troubleshooting
-
-### Erro: `CLIENT_FETCH_ERROR` - "Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON"
-
-**Causa:** Falta a variável `NEXTAUTH_SECRET` no arquivo `.env` ou o middleware está bloqueando as rotas de autenticação.
-
-**Solução:**
-1. Certifique-se de que o arquivo `.env` existe na raiz do projeto
-2. Gere uma chave secreta:
-   ```bash
-   openssl rand -base64 32
-   ```
-3. Adicione ao `.env`:
-   ```env
-   NEXTAUTH_SECRET="sua-chave-gerada-aqui"
-   NEXTAUTH_URL="http://localhost:3000"
-   ```
-4. Reinicie o servidor de desenvolvimento
-
-### Erro: Banco de dados não conecta
-
-**Solução:**
-```bash
-# Verificar se o container está rodando
-docker ps
-
-# Iniciar o container
-docker-compose up -d
-
-# Verificar logs
-docker-compose logs postgres
-```
-
-### Erro: Prisma Client não encontrado
-
-**Solução:**
-```bash
-pnpm prisma generate
-pnpm install
-```
-
 ## 📝 Licença
 
 Este projeto é **open source** e está disponível sob a licença MIT. Foi criado com a intenção de uso próprio, mas pode ser utilizado e modificado por outros desenvolvedores.
@@ -259,4 +207,3 @@ Este é um projeto pessoal desenvolvido para uso próprio. Se você encontrar bu
 ---
 
 **Desenvolvido com ❤️ para uso pessoal e familiar**
-
