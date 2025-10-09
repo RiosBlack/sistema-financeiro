@@ -54,10 +54,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public assets
      */
-    '/',
-    '/dashboard/:path*',
-    '/api/:path*',
-    '/login',
-    '/register',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)',
   ],
 }

@@ -106,9 +106,6 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="mt-4 text-center">
-            <Button variant="link" className="text-sm">
-              Esqueceu sua senha?
-            </Button>
           </div>
         </CardContent>
       </Card>
