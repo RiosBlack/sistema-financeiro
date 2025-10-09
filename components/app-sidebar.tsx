@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, CreditCard, Target, TrendingUp, Settings, LogOut, Tag } from "lucide-react"
+import { Home, CreditCard, Target, TrendingUp, Settings, LogOut, Tag, Users } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -43,6 +43,11 @@ const menuItems = [
     title: "Categorias",
     url: "/dashboard/categories",
     icon: Tag,
+  },
+  {
+    title: "Família",
+    url: "/dashboard/family",
+    icon: Users,
   },
   {
     title: "Configurações",
