@@ -7,6 +7,7 @@ export const bankAccountSchema = z.object({
   type: z.enum(['CHECKING', 'SAVINGS', 'INVESTMENT', 'CASH', 'OTHER']),
   initialBalance: z.coerce.number().min(0, 'Saldo inicial deve ser positivo').default(0),
   color: z.string().optional(),
+  isShared: z.boolean().optional().default(false),
   sharedWithUserIds: z.array(z.string()).optional().default([]),
 });
 
@@ -22,6 +23,7 @@ export const cardSchema = z.object({
   dueDay: z.coerce.number().min(1).max(31, 'Dia deve estar entre 1 e 31').optional(),
   closingDay: z.coerce.number().min(1).max(31, 'Dia deve estar entre 1 e 31').optional(),
   color: z.string().optional(),
+  isShared: z.boolean().optional().default(false),
   bankAccountId: z.string().optional(),
 });
 
@@ -33,6 +35,7 @@ export const categorySchema = z.object({
   icon: z.string().optional(),
   color: z.string().optional(),
   type: z.enum(['INCOME', 'EXPENSE']),
+  isShared: z.boolean().optional().default(false),
 });
 
 export type CategoryFormData = z.infer<typeof categorySchema>;
@@ -51,6 +54,7 @@ export const transactionSchema = z.object({
   recurringType: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']).optional(),
   installments: z.coerce.number().int().min(1).max(60, 'Máximo 60 parcelas').optional(),
   notes: z.string().optional(),
+  isShared: z.boolean().optional().default(false),
 }).refine(
   (data) => {
     // Se tem cartão, não precisa de conta bancária

@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Switch } from "@/components/ui/switch"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { bankAccountSchema, type BankAccountFormData } from "@/lib/validations"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
+import { useFamilyStore } from "@/store/use-family-store"
 import { toast } from "sonner"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface AccountFormProps {
   onSuccess?: () => void
@@ -28,6 +30,11 @@ const accountTypes = [
 export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { addAccount } = useBankAccountsStore()
+  const { family, fetchFamily } = useFamilyStore()
+
+  useEffect(() => {
+    fetchFamily()
+  }, [fetchFamily])
 
   const form = useForm<BankAccountFormData>({
     resolver: zodResolver(bankAccountSchema),
@@ -37,6 +44,7 @@ export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
       type: "CHECKING",
       initialBalance: 0,
       color: "#3b82f6",
+      isShared: false,
       sharedWithUserIds: [],
     },
   })
@@ -159,6 +167,29 @@ export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
             )}
           />
         </div>
+
+        {family && (
+          <FormField
+            control={form.control}
+            name="isShared"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Compartilhar com Família</FormLabel>
+                  <FormDescription>
+                    Permitir que todos os membros da família {family.name} visualizem esta conta
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex gap-2 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
