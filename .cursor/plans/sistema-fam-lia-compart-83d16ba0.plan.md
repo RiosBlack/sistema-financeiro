@@ -251,16 +251,29 @@ interface FamilyStore {
 
 ### To-dos
 
-- [ ] Criar modelos Family, FamilyMember, FamilyInvitation e adicionar campos isShared aos modelos existentes
-- [ ] Executar migração do Prisma para criar novas tabelas
-- [ ] Implementar APIs de família (criar, buscar, membros)
-- [ ] Implementar APIs de convites (enviar, listar, aceitar, rejeitar)
-- [ ] Implementar API de compartilhamento de itens
-- [ ] Modificar APIs existentes (contas, cartões, transações, categorias) para incluir dados compartilhados
-- [ ] Criar store Zustand para gerenciamento de família
-- [ ] Criar página de família com listagem de membros e convites
-- [ ] Criar componentes de notificação e gerenciamento de convites
-- [ ] Adicionar toggles de compartilhamento em todos os formulários
-- [ ] Adicionar indicadores visuais de compartilhamento nas listagens
-- [ ] Implementar regras de permissão (desabilitar edição/exclusão de itens de outros)
-- [ ] Adicionar item Família no sidebar e badge de notificações no header
+- [x] Criar modelos Family, FamilyMember, FamilyInvitation e adicionar campos isShared aos modelos existentes
+- [x] Executar migração do Prisma para criar novas tabelas
+- [x] Implementar APIs de família (criar, buscar, membros)
+- [x] Implementar APIs de convites (enviar, listar, aceitar, rejeitar)
+- [x] ~~Implementar API de compartilhamento de itens~~ (REFATORADO: Compartilhamento agora é automático)
+- [x] Modificar APIs existentes (contas, cartões, transações, categorias, metas) para incluir dados compartilhados
+  - [x] API de contas - Auto-compartilhamento implementado
+  - [x] API de cartões - Auto-compartilhamento implementado
+  - [x] API de transações - Auto-compartilhamento implementado
+  - [x] API de categorias - Queries ajustadas
+  - [x] API de metas - Auto-compartilhamento implementado
+- [x] Criar store Zustand para gerenciamento de família
+- [x] Criar página de família com listagem de membros e convites
+- [x] Criar componentes de notificação e gerenciamento de convites
+- [x] ~~Adicionar toggles de compartilhamento em todos os formulários~~ (REFATORADO: Removido - compartilhamento automático)
+- [x] Adicionar indicadores visuais de compartilhamento nas listagens
+- [x] Implementar regras de permissão (desabilitar edição/exclusão de itens de outros)
+- [x] Adicionar item Família no sidebar e badge de notificações no header
+- [x] **REFATORAÇÃO COMPLETA:**
+  - [x] Remover UI de compartilhamento manual (toggles)
+  - [x] Implementar compartilhamento automático baseado em família
+  - [x] Criar sistema de visualização separado (/dashboard/family/shared)
+  - [x] Criar API para buscar dados de membros específicos
+  - [x] Criar store para visualização de membros (use-member-view-store)
+  - [x] Criar componente reutilizável de dashboard read-only
+  - [x] Limpar schemas de validação (remover isShared dos forms)
