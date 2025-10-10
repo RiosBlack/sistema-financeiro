@@ -57,17 +57,27 @@ export const useUsersStore = create<UsersStore>((set, get) => ({
   error: null,
 
   fetchUsers: async () => {
+    console.log("🔍 Iniciando fetchUsers...");
     set({ isLoading: true, error: null });
     try {
       const response = await fetch("/api/users");
+      console.log("📡 Response status:", response.status);
+      
       if (!response.ok) {
-        throw new Error("Erro ao buscar usuários");
+        const errorData = await response.json();
+        console.error("❌ Erro da API:", errorData);
+        throw new Error(errorData.error || "Erro ao buscar usuários");
       }
+      
       const users = await response.json();
+      console.log("✅ Usuários recebidos:", users);
+      console.log("📊 Total de usuários:", users.length);
+      
       set({ users, isLoading: false });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Erro ao buscar usuários";
+      console.error("❌ Erro no fetchUsers:", error);
       set({ error: message, isLoading: false });
       toast.error(message);
     }

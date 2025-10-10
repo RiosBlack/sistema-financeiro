@@ -78,6 +78,11 @@ export default function SettingsPage() {
     fetchUsers();
   }, [fetchUsers, status, session, router]);
 
+  // Debug: verificar estado dos usuários
+  console.log("Users state:", users);
+  console.log("Is loading:", isLoading);
+  console.log("Users length:", users?.length);
+
   // Mostrar loading enquanto verifica autenticação
   if (status === "loading" || isLoading) {
     return (
