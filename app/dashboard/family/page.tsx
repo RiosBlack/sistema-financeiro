@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useFamilyStore } from "@/store/use-family-store";
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store";
 import { useCardsStore } from "@/store/use-cards-store";
-import { useCategoriesStore } from "@/store/use-categories-store";
+import { useTransactionsStore } from "@/store/use-transactions-store";
+import { useGoalsStore } from "@/store/use-goals-store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Users, UserPlus, UserMinus, Crown, LogOut, Wallet, CreditCard, Tag, Share2 } from "lucide-react";
+import { Loader2, Users, UserPlus, UserMinus, Crown, LogOut, Wallet, CreditCard, ArrowLeftRight, Target, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 
@@ -23,7 +24,8 @@ export default function FamilyPage() {
   const { family, userRole, fetchFamily, createFamily, inviteMember, removeMember, leaveFamily, toggleShare } = useFamilyStore();
   const { accounts, fetchAccounts } = useBankAccountsStore();
   const { cards, fetchCards } = useCardsStore();
-  const { categories, fetchCategories } = useCategoriesStore();
+  const { transactions, fetchTransactions } = useTransactionsStore();
+  const { goals, fetchGoals } = useGoalsStore();
   
   const [loading, setLoading] = useState(true);
   const [createDialog, setCreateDialog] = useState(false);
@@ -48,9 +50,10 @@ export default function FamilyPage() {
     if (family) {
       fetchAccounts();
       fetchCards();
-      fetchCategories();
+      fetchTransactions();
+      fetchGoals();
     }
-  }, [family, fetchAccounts, fetchCards, fetchCategories]);
+  }, [family, fetchAccounts, fetchCards, fetchTransactions, fetchGoals]);
 
   const handleCreateFamily = async () => {
     if (!familyName.trim()) {
@@ -115,7 +118,7 @@ export default function FamilyPage() {
   };
 
   const handleToggleShare = async (
-    type: "bankAccount" | "card" | "category" | "transaction",
+    type: "bankAccount" | "card" | "category" | "transaction" | "goal",
     itemId: string,
     currentlyShared: boolean
   ) => {
@@ -124,7 +127,8 @@ export default function FamilyPage() {
       // Recarregar dados
       if (type === "bankAccount") await fetchAccounts();
       if (type === "card") await fetchCards();
-      if (type === "category") await fetchCategories();
+      if (type === "transaction") await fetchTransactions();
+      if (type === "goal") await fetchGoals();
     } catch (error) {
       // Erro já tratado no store
     }
@@ -324,7 +328,7 @@ export default function FamilyPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="accounts" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="accounts">
                 <Wallet className="h-4 w-4 mr-2" />
                 Contas
@@ -333,9 +337,13 @@ export default function FamilyPage() {
                 <CreditCard className="h-4 w-4 mr-2" />
                 Cartões
               </TabsTrigger>
-              <TabsTrigger value="categories">
-                <Tag className="h-4 w-4 mr-2" />
-                Categorias
+              <TabsTrigger value="transactions">
+                <ArrowLeftRight className="h-4 w-4 mr-2" />
+                Transações
+              </TabsTrigger>
+              <TabsTrigger value="goals">
+                <Target className="h-4 w-4 mr-2" />
+                Metas
               </TabsTrigger>
             </TabsList>
 
@@ -393,7 +401,7 @@ export default function FamilyPage() {
               ) : (
                 <div className="space-y-2">
                   {cards
-                    .filter((card) => card.ownerId === session?.user?.id)
+                    .filter((card) => card.userId === session?.user?.id)
                     .map((card) => (
                       <div
                         key={card.id}
@@ -402,7 +410,7 @@ export default function FamilyPage() {
                         <div>
                           <div className="font-medium">{card.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {card.lastFourDigits ? `•••• ${card.lastFourDigits}` : "Sem número"}
+                            {card.lastDigits ? `•••• ${card.lastDigits}` : "Sem número"}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -423,42 +431,91 @@ export default function FamilyPage() {
               )}
             </TabsContent>
 
-            {/* Tab de Categorias */}
-            <TabsContent value="categories" className="space-y-4">
-              {categories.length === 0 ? (
+            {/* Tab de Transações */}
+            <TabsContent value="transactions" className="space-y-4">
+              {transactions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  Você ainda não tem categorias personalizadas
+                  Você ainda não tem transações cadastradas
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {categories
-                    .filter((cat) => cat.createdById === session?.user?.id && !cat.isDefault)
-                    .map((category) => (
+                  {transactions
+                    .filter((tx) => tx.userId === session?.user?.id)
+                    .slice(0, 20) // Mostrar apenas as 20 mais recentes
+                    .map((transaction) => (
                       <div
-                        key={category.id}
+                        key={transaction.id}
                         className="flex items-center justify-between p-3 border rounded-lg"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium">{transaction.description}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(transaction.date).toLocaleDateString("pt-BR")} • 
+                            {transaction.type === "INCOME" ? " Receita" : " Despesa"} •
+                            R$ {transaction.amount.toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`transaction-${transaction.id}`} className="text-sm cursor-pointer">
+                            {transaction.isShared ? "Compartilhado" : "Privado"}
+                          </Label>
+                          <Switch
+                            id={`transaction-${transaction.id}`}
+                            checked={transaction.isShared}
+                            onCheckedChange={() =>
+                              handleToggleShare("transaction", transaction.id, transaction.isShared || false)
+                            }
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  {transactions.filter((tx) => tx.userId === session?.user?.id).length > 20 && (
+                    <div className="text-center text-sm text-muted-foreground pt-2">
+                      Mostrando apenas as 20 transações mais recentes
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Tab de Metas */}
+            <TabsContent value="goals" className="space-y-4">
+              {goals.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Você ainda não tem metas cadastradas
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {goals
+                    .filter((goal) => goal.createdById === session?.user?.id)
+                    .map((goal) => (
+                      <div
+                        key={goal.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3 flex-1">
                           <div
                             className="h-3 w-3 rounded-full"
-                            style={{ backgroundColor: category.color || "#gray" }}
+                            style={{ backgroundColor: goal.color || "#gray" }}
                           />
-                          <div>
-                            <div className="font-medium">{category.name}</div>
+                          <div className="flex-1">
+                            <div className="font-medium">{goal.name}</div>
                             <div className="text-sm text-muted-foreground">
-                              {category.type === "INCOME" ? "Receita" : "Despesa"}
+                              R$ {goal.currentAmount.toFixed(2)} de R$ {goal.targetAmount.toFixed(2)}
+                              {" • "}
+                              {Math.round((goal.currentAmount / goal.targetAmount) * 100)}%
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Label htmlFor={`category-${category.id}`} className="text-sm cursor-pointer">
-                            {category.isShared ? "Compartilhado" : "Privado"}
+                          <Label htmlFor={`goal-${goal.id}`} className="text-sm cursor-pointer">
+                            {goal.isShared ? "Compartilhado" : "Privado"}
                           </Label>
                           <Switch
-                            id={`category-${category.id}`}
-                            checked={category.isShared}
+                            id={`goal-${goal.id}`}
+                            checked={goal.isShared}
                             onCheckedChange={() =>
-                              handleToggleShare("category", category.id, category.isShared)
+                              handleToggleShare("goal", goal.id, goal.isShared || false)
                             }
                           />
                         </div>

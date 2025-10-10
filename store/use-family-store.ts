@@ -19,7 +19,7 @@ interface FamilyStore {
   rejectInvitation: (id: string) => Promise<void>;
   removeMember: (memberId: string) => Promise<void>;
   toggleShare: (
-    type: "bankAccount" | "card" | "category" | "transaction",
+    type: "bankAccount" | "card" | "category" | "transaction" | "goal",
     itemId: string,
     shared: boolean
   ) => Promise<void>;
@@ -228,7 +228,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
   },
 
   toggleShare: async (
-    type: "bankAccount" | "card" | "category" | "transaction",
+    type: "bankAccount" | "card" | "category" | "transaction" | "goal",
     itemId: string,
     shared: boolean
   ) => {

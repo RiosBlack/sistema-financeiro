@@ -23,6 +23,7 @@ export interface BankAccount {
   currentBalance: number;
   color?: string | null;
   isActive: boolean;
+  isShared: boolean;
   createdById: string;
   users?: UserBankAccount[];
   cards?: Card[];
@@ -55,6 +56,7 @@ export interface Card {
   closingDay?: number | null;
   color?: string | null;
   isActive: boolean;
+  isShared: boolean;
   userId: string;
   bankAccountId?: string | null;
   bankAccount?: {
@@ -77,6 +79,7 @@ export interface Category {
   color?: string | null;
   type: TransactionType;
   isDefault: boolean;
+  isShared: boolean;
   createdById?: string | null;
   _count?: {
     transactions: number;
@@ -97,6 +100,7 @@ export interface Transaction {
   recurringType?: RecurringType | null;
   installments?: number | null;
   currentInstallment?: number | null;
+  isShared?: boolean;
   userId: string;
   categoryId: string;
   category?: Category;
@@ -130,6 +134,7 @@ export interface Goal {
   icon?: string | null;
   color?: string | null;
   isCompleted: boolean;
+  isShared?: boolean;
   createdById: string;
   createdBy?: {
     id: string;
