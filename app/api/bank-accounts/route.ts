@@ -92,7 +92,6 @@ export async function POST(request: NextRequest) {
       type,
       initialBalance,
       color,
-      isShared = false, // Compartilhar com família
       sharedWithUserIds = [], // IDs de usuários para compartilhar a conta
     } = body;
 
@@ -100,6 +99,14 @@ export async function POST(request: NextRequest) {
     if (!name || !institution) {
       return errorResponse("Nome e instituição são obrigatórios", 400);
     }
+
+    // Verificar se o usuário está em uma família para auto-compartilhar
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
+    const isShared = !!familyMember; // Auto-compartilhar se estiver em família
 
     // Criar conta bancária
     const account = await prisma.bankAccount.create({

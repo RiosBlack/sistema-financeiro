@@ -135,7 +135,6 @@ export async function POST(request: NextRequest) {
       recurringType,
       installments,
       notes,
-      isShared = false, // Compartilhar com família
     } = body;
 
     // Validações
@@ -192,6 +191,14 @@ export async function POST(request: NextRequest) {
         return errorResponse("Cartão não encontrado", 404);
       }
     }
+
+    // Verificar se o usuário está em uma família para auto-compartilhar
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
+    const isShared = !!familyMember; // Auto-compartilhar se estiver em família
 
     // Se tem parcelamento, criar transação pai e filhas
     if (installments && installments > 1) {

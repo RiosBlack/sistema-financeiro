@@ -18,11 +18,6 @@ interface FamilyStore {
   acceptInvitation: (id: string) => Promise<void>;
   rejectInvitation: (id: string) => Promise<void>;
   removeMember: (memberId: string) => Promise<void>;
-  toggleShare: (
-    type: "bankAccount" | "card" | "category" | "transaction" | "goal",
-    itemId: string,
-    shared: boolean
-  ) => Promise<void>;
 }
 
 export const useFamilyStore = create<FamilyStore>((set, get) => ({
@@ -222,38 +217,6 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Erro ao remover membro";
-      toast.error(message);
-      throw error;
-    }
-  },
-
-  toggleShare: async (
-    type: "bankAccount" | "card" | "category" | "transaction" | "goal",
-    itemId: string,
-    shared: boolean
-  ) => {
-    try {
-      const response = await fetch("/api/family/share", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ type, itemId, shared }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao compartilhar item");
-      }
-
-      toast.success(
-        shared
-          ? "Item compartilhado com sucesso"
-          : "Compartilhamento removido"
-      );
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Erro ao compartilhar item";
       toast.error(message);
       throw error;
     }

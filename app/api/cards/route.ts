@@ -84,7 +84,6 @@ export async function POST(request: NextRequest) {
       closingDay,
       color,
       bankAccountId,
-      isShared = false, // Compartilhar com família
     } = body;
 
     // Validações
@@ -109,6 +108,14 @@ export async function POST(request: NextRequest) {
         return errorResponse("Você não tem acesso a esta conta bancária", 403);
       }
     }
+
+    // Verificar se o usuário está em uma família para auto-compartilhar
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
+    const isShared = !!familyMember; // Auto-compartilhar se estiver em família
 
     const card = await prisma.card.create({
       data: {

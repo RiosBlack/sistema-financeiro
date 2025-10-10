@@ -75,6 +75,14 @@ export async function POST(request: NextRequest) {
       return errorResponse("Valor alvo deve ser maior que zero", 400);
     }
 
+    // Verificar se o usuário está em uma família para auto-compartilhar
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
+    const isShared = !!familyMember; // Auto-compartilhar se estiver em família
+
     // Criar meta
     const goal = await prisma.goal.create({
       data: {
@@ -84,6 +92,7 @@ export async function POST(request: NextRequest) {
         deadline: deadline ? new Date(deadline) : null,
         icon,
         color,
+        isShared,
         createdById: user.id,
         users: {
           create: [

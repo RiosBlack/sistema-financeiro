@@ -241,6 +241,7 @@ model Goal {
   icon          String?
   color         String?
   isCompleted   Boolean   @default(false)
+  isShared      Boolean   @default(false) // Compartilhado com família
 
   createdById String
   createdBy   User   @relation("GoalCreator", fields: [createdById], references: [id], onDelete: Cascade)
