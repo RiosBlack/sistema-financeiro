@@ -1,20 +1,49 @@
 import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { getAuthenticatedUser, unauthorizedResponse, errorResponse, successResponse } from "@/lib/api-auth";
+import {
+  getAuthenticatedUser,
+  unauthorizedResponse,
+  errorResponse,
+  successResponse,
+} from "@/lib/api-auth";
 
-// GET - Listar metas do usuário
+// GET - Listar metas do usuário (próprias e compartilhadas por família)
 export async function GET() {
   try {
     const user = await getAuthenticatedUser();
     if (!user) return unauthorizedResponse();
 
+    // Buscar família do usuário
+    const familyMember = await prisma.familyMember.findFirst({
+      where: { userId: user.id },
+      select: { familyId: true },
+    });
+
     const goals = await prisma.goal.findMany({
       where: {
-        users: {
-          some: {
-            userId: user.id,
+        OR: [
+          // Metas onde o usuário é participante direto
+          {
+            users: {
+              some: {
+                userId: user.id,
+              },
+            },
           },
-        },
+          // Metas compartilhadas por membros da família
+          familyMember
+            ? {
+                isShared: true,
+                createdBy: {
+                  familyMembers: {
+                    some: {
+                      familyId: familyMember.familyId,
+                    },
+                  },
+                },
+              }
+            : {},
+        ],
       },
       include: {
         users: {
@@ -36,10 +65,7 @@ export async function GET() {
           },
         },
       },
-      orderBy: [
-        { isCompleted: "asc" },
-        { deadline: "asc" },
-      ],
+      orderBy: [{ isCompleted: "asc" }, { deadline: "asc" }],
     });
 
     return successResponse(goals);
@@ -129,4 +155,3 @@ export async function POST(request: NextRequest) {
     return errorResponse("Erro ao criar meta");
   }
 }
-

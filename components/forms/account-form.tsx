@@ -6,13 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { bankAccountSchema, type BankAccountFormData } from "@/lib/validations"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
-import { useFamilyStore } from "@/store/use-family-store"
 import { toast } from "sonner"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 interface AccountFormProps {
   onSuccess?: () => void
@@ -30,11 +28,6 @@ const accountTypes = [
 export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { addAccount } = useBankAccountsStore()
-  const { family, fetchFamily } = useFamilyStore()
-
-  useEffect(() => {
-    fetchFamily()
-  }, [fetchFamily])
 
   const form = useForm<BankAccountFormData>({
     resolver: zodResolver(bankAccountSchema),
@@ -44,7 +37,6 @@ export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
       type: "CHECKING",
       initialBalance: 0,
       color: "#3b82f6",
-      isShared: false,
       sharedWithUserIds: [],
     },
   })
@@ -52,7 +44,7 @@ export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
   async function onSubmit(data: BankAccountFormData) {
     try {
       setIsSubmitting(true)
-      
+
       const response = await fetch('/api/bank-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,7 +58,7 @@ export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
 
       const newAccount = await response.json()
       addAccount(newAccount)
-      
+
       toast.success('Conta criada com sucesso!')
       onSuccess?.()
     } catch (error) {
@@ -141,10 +133,10 @@ export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
               <FormItem>
                 <FormLabel>Saldo Inicial</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    placeholder="0.00" 
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
                     {...field}
                     onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                   />
@@ -167,29 +159,6 @@ export function AccountForm({ onSuccess, onCancel }: AccountFormProps) {
             )}
           />
         </div>
-
-        {family && (
-          <FormField
-            control={form.control}
-            name="isShared"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Compartilhar com Família</FormLabel>
-                  <FormDescription>
-                    Permitir que todos os membros da família {family.name} visualizem esta conta
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        )}
 
         <div className="flex gap-2 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>

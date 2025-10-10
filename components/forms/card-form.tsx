@@ -5,12 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCardsStore } from "@/store/use-cards-store"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
-import { useFamilyStore } from "@/store/use-family-store"
 import { useToast } from "@/hooks/use-toast"
 import { useEffect } from "react"
 
@@ -24,7 +22,6 @@ const cardSchema = z.object({
   closingDay: z.number().min(1).max(31).optional(),
   bankAccountId: z.string().optional(),
   color: z.string().optional(),
-  isShared: z.boolean().optional().default(false),
 })
 
 type CardFormData = z.infer<typeof cardSchema>
@@ -38,12 +35,10 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
   const { toast } = useToast()
   const { createCard } = useCardsStore()
   const { accounts, fetchAccounts } = useBankAccountsStore()
-  const { family, fetchFamily } = useFamilyStore()
 
   useEffect(() => {
     fetchAccounts()
-    fetchFamily()
-  }, [fetchAccounts, fetchFamily])
+  }, [fetchAccounts])
 
   const form = useForm<CardFormData>({
     resolver: zodResolver(cardSchema),
@@ -53,7 +48,6 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
       type: "CREDIT",
       brand: "",
       limit: undefined,
-      isShared: false,
       dueDay: undefined,
       closingDay: undefined,
       bankAccountId: "",
@@ -121,8 +115,8 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
               <FormItem>
                 <FormLabel>Últimos 4 Dígitos *</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="1234" 
+                  <Input
+                    placeholder="1234"
                     maxLength={4}
                     {...field}
                     onChange={(e) => {
@@ -197,8 +191,8 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
                   <FormItem>
                     <FormLabel>Limite</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         step="0.01"
                         placeholder="0.00"
                         {...field}
@@ -218,8 +212,8 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
                   <FormItem>
                     <FormLabel>Dia Vencimento</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         min="1"
                         max="31"
                         placeholder="10"
@@ -241,8 +235,8 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
                   <FormItem>
                     <FormLabel>Dia Fechamento</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
+                      <Input
+                        type="number"
                         min="1"
                         max="31"
                         placeholder="5"
@@ -267,8 +261,8 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Conta Vinculada</FormLabel>
-                <Select 
-                  onValueChange={(value) => field.onChange(value === "none" ? undefined : value)} 
+                <Select
+                  onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
                   value={field.value || "none"}
                 >
                   <FormControl>
@@ -302,9 +296,9 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
                 <FormControl>
                   <div className="flex gap-2">
                     <Input type="color" {...field} className="w-20 h-10" />
-                    <Input 
-                      type="text" 
-                      value={field.value} 
+                    <Input
+                      type="text"
+                      value={field.value}
                       onChange={field.onChange}
                       placeholder="#6366f1"
                       className="flex-1"
@@ -316,29 +310,6 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
             )}
           />
         </div>
-
-        {family && (
-          <FormField
-            control={form.control}
-            name="isShared"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel className="text-base">Compartilhar com Família</FormLabel>
-                  <FormDescription>
-                    Permitir que todos os membros da família {family.name} visualizem este cartão
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        )}
 
         <div className="flex gap-2 justify-end">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
