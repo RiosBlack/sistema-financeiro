@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -79,6 +80,12 @@ export function UserForm({ user, onSuccess }: UserFormProps) {
       onSuccess?.();
     } catch (error) {
       console.error("Erro ao salvar usuário:", error);
+      // Mostrar mensagem de erro específica se disponível
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Erro ao salvar usuário");
+      }
     }
   };
 
@@ -146,7 +153,7 @@ export function UserForm({ user, onSuccess }: UserFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="none">Nenhum</SelectItem>
+                  <SelectItem value="USER">Usuário Padrão</SelectItem>
                   {roles.map((role) => (
                     <SelectItem key={role.id} value={role.id}>
                       {role.name}

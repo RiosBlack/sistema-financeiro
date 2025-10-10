@@ -10,10 +10,7 @@ export async function GET() {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Não autorizado" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     // Verificar se o usuário é admin
@@ -24,7 +21,10 @@ export async function GET() {
 
     if (!currentUser || currentUser.role?.name?.toLowerCase() !== "admin") {
       return NextResponse.json(
-        { error: "Acesso negado. Apenas administradores podem acessar esta rota." },
+        {
+          error:
+            "Acesso negado. Apenas administradores podem acessar esta rota.",
+        },
         { status: 403 }
       );
     }
@@ -73,10 +73,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Não autorizado" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
     // Verificar se o usuário é admin
@@ -87,7 +84,9 @@ export async function POST(request: Request) {
 
     if (!currentUser || currentUser.role?.name?.toLowerCase() !== "admin") {
       return NextResponse.json(
-        { error: "Acesso negado. Apenas administradores podem criar usuários." },
+        {
+          error: "Acesso negado. Apenas administradores podem criar usuários.",
+        },
         { status: 403 }
       );
     }
@@ -154,4 +153,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

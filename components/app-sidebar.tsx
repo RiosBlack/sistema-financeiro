@@ -60,9 +60,9 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   const handleLogout = async () => {
-    await signOut({ 
+    await signOut({
       callbackUrl: '/login',
-      redirect: true 
+      redirect: true
     })
   }
 
@@ -98,16 +98,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="text-red-600 hover:text-red-700">
-              <LogOut className="h-4 w-4" />
-              <span>Sair</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   )
 }
