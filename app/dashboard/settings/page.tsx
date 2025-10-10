@@ -53,19 +53,28 @@ export default function SettingsPage() {
   // Verificar se o usuário é admin
   useEffect(() => {
     if (status === "loading") return;
-
+    
     if (!session?.user) {
       router.push("/login");
       return;
     }
 
+    // Debug: verificar estrutura da sessão
+    console.log("Session completa:", session);
+    console.log("User:", session.user);
+    console.log("Role:", session.user?.role);
+
     // Verificar se o role é admin
     const userRole = session.user?.role?.name;
+    console.log("User role name:", userRole);
+    
     if (userRole?.toLowerCase() !== "admin") {
+      console.log("Não é admin, redirecionando...");
       router.push("/dashboard");
       return;
     }
 
+    console.log("É admin! Buscando usuários...");
     fetchUsers();
   }, [fetchUsers, status, session, router]);
 

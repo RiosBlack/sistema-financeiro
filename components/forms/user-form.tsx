@@ -147,11 +147,11 @@ export function UserForm({ user, onSuccess }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Perfil (Opcional)</FormLabel>
-              <Select 
+              <Select
                 onValueChange={(value) => {
                   // Se selecionar "none", limpar o campo
                   field.onChange(value === "none" ? "" : value);
-                }} 
+                }}
                 value={field.value || "none"}
               >
                 <FormControl>
