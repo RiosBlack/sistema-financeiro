@@ -236,13 +236,7 @@ export default function SettingsPage() {
                                 {user._count.transactions} transações
                               </span>
                               <span>
-                                {user._count.bankAccounts} contas
-                              </span>
-                              <span>
                                 {user._count.cards} cartões
-                              </span>
-                              <span>
-                                {user._count.goals} metas
                               </span>
                             </>
                           )}
@@ -312,9 +306,7 @@ export default function SettingsPage() {
                 </p>
                 {deleteDialog.user?._count &&
                   (deleteDialog.user._count.transactions > 0 ||
-                    deleteDialog.user._count.bankAccounts > 0 ||
-                    deleteDialog.user._count.cards > 0 ||
-                    deleteDialog.user._count.goals > 0) && (
+                    deleteDialog.user._count.cards > 0) && (
                     <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/20 rounded-md border border-red-200 dark:border-red-900">
                       <p className="text-sm text-red-800 dark:text-red-300 font-medium">
                         ⚠️ Este usuário possui dados associados e não pode ser
@@ -333,9 +325,7 @@ export default function SettingsPage() {
               disabled={
                 deleteDialog.user?._count &&
                 (deleteDialog.user._count.transactions > 0 ||
-                  deleteDialog.user._count.bankAccounts > 0 ||
-                  deleteDialog.user._count.cards > 0 ||
-                  deleteDialog.user._count.goals > 0)
+                  deleteDialog.user._count.cards > 0)
               }
             >
               Excluir

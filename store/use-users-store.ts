@@ -19,9 +19,7 @@ export interface User {
   role: Role | null;
   _count?: {
     transactions: number;
-    bankAccounts: number;
     cards: number;
-    goals: number;
   };
 }
 
