@@ -8,20 +8,31 @@ import bcrypt from "bcryptjs";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
+    
+    console.log("📋 Session:", session);
+    console.log("👤 Session.user:", session?.user);
+    console.log("🆔 Session.user.id:", session?.user?.id);
 
     if (!session?.user) {
+      console.log("❌ Sem sessão ou usuário");
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    }
+
+    if (!session.user.id) {
+      console.log("❌ session.user.id está undefined!");
+      return NextResponse.json({ error: "ID do usuário não encontrado" }, { status: 401 });
     }
 
     // Verificar se o usuário é admin
     try {
+      console.log("🔍 Buscando usuário com ID:", session.user.id);
       const currentUser = await prisma.user.findUnique({
         where: { id: session.user.id },
         include: { role: true },
       });
 
-      console.log("User verificado:", currentUser);
-      console.log("Role do user:", currentUser?.role);
+      console.log("✅ User verificado:", currentUser);
+      console.log("👑 Role do user:", currentUser?.role);
 
       if (!currentUser || currentUser.role?.name?.toLowerCase() !== "admin") {
         return NextResponse.json(
