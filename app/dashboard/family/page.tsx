@@ -2,20 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useFamilyStore } from "@/store/use-family-store";
+import { useBankAccountsStore } from "@/store/use-bank-accounts-store";
+import { useCardsStore } from "@/store/use-cards-store";
+import { useCategoriesStore } from "@/store/use-categories-store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, UserPlus, UserMinus, Crown, LogOut } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Users, UserPlus, UserMinus, Crown, LogOut, Wallet, CreditCard, Tag, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 
 export default function FamilyPage() {
   const { data: session } = useSession();
-  const { family, userRole, fetchFamily, createFamily, inviteMember, removeMember, leaveFamily } = useFamilyStore();
+  const { family, userRole, fetchFamily, createFamily, inviteMember, removeMember, leaveFamily, toggleShare } = useFamilyStore();
+  const { accounts, fetchAccounts } = useBankAccountsStore();
+  const { cards, fetchCards } = useCardsStore();
+  const { categories, fetchCategories } = useCategoriesStore();
+  
   const [loading, setLoading] = useState(true);
   const [createDialog, setCreateDialog] = useState(false);
   const [inviteDialog, setInviteDialog] = useState(false);
@@ -33,6 +42,15 @@ export default function FamilyPage() {
     };
     loadFamily();
   }, [fetchFamily]);
+
+  // Carregar dados financeiros quando estiver em uma família
+  useEffect(() => {
+    if (family) {
+      fetchAccounts();
+      fetchCards();
+      fetchCategories();
+    }
+  }, [family, fetchAccounts, fetchCards, fetchCategories]);
 
   const handleCreateFamily = async () => {
     if (!familyName.trim()) {
@@ -93,6 +111,22 @@ export default function FamilyPage() {
       // Erro já tratado no store
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleToggleShare = async (
+    type: "bankAccount" | "card" | "category" | "transaction",
+    itemId: string,
+    currentlyShared: boolean
+  ) => {
+    try {
+      await toggleShare(type, itemId, !currentlyShared);
+      // Recarregar dados
+      if (type === "bankAccount") await fetchAccounts();
+      if (type === "card") await fetchCards();
+      if (type === "category") await fetchCategories();
+    } catch (error) {
+      // Erro já tratado no store
     }
   };
 
@@ -274,6 +308,166 @@ export default function FamilyPage() {
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Gerenciamento de Compartilhamento */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Share2 className="h-5 w-5" />
+            Gerenciar Compartilhamentos
+          </CardTitle>
+          <CardDescription>
+            Escolha quais itens financeiros você deseja compartilhar com sua família
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="accounts" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="accounts">
+                <Wallet className="h-4 w-4 mr-2" />
+                Contas
+              </TabsTrigger>
+              <TabsTrigger value="cards">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Cartões
+              </TabsTrigger>
+              <TabsTrigger value="categories">
+                <Tag className="h-4 w-4 mr-2" />
+                Categorias
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Tab de Contas */}
+            <TabsContent value="accounts" className="space-y-4">
+              {accounts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Você ainda não tem contas cadastradas
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {accounts
+                    .filter((acc) => acc.createdById === session?.user?.id)
+                    .map((account) => (
+                      <div
+                        key={account.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{ backgroundColor: account.color || "#gray" }}
+                          />
+                          <div>
+                            <div className="font-medium">{account.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {account.institution}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`account-${account.id}`} className="text-sm cursor-pointer">
+                            {account.isShared ? "Compartilhado" : "Privado"}
+                          </Label>
+                          <Switch
+                            id={`account-${account.id}`}
+                            checked={account.isShared}
+                            onCheckedChange={() =>
+                              handleToggleShare("bankAccount", account.id, account.isShared)
+                            }
+                          />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Tab de Cartões */}
+            <TabsContent value="cards" className="space-y-4">
+              {cards.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Você ainda não tem cartões cadastrados
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {cards
+                    .filter((card) => card.ownerId === session?.user?.id)
+                    .map((card) => (
+                      <div
+                        key={card.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div>
+                          <div className="font-medium">{card.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {card.lastFourDigits ? `•••• ${card.lastFourDigits}` : "Sem número"}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`card-${card.id}`} className="text-sm cursor-pointer">
+                            {card.isShared ? "Compartilhado" : "Privado"}
+                          </Label>
+                          <Switch
+                            id={`card-${card.id}`}
+                            checked={card.isShared}
+                            onCheckedChange={() =>
+                              handleToggleShare("card", card.id, card.isShared)
+                            }
+                          />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Tab de Categorias */}
+            <TabsContent value="categories" className="space-y-4">
+              {categories.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Você ainda não tem categorias personalizadas
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {categories
+                    .filter((cat) => cat.createdById === session?.user?.id && !cat.isDefault)
+                    .map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="h-3 w-3 rounded-full"
+                            style={{ backgroundColor: category.color || "#gray" }}
+                          />
+                          <div>
+                            <div className="font-medium">{category.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {category.type === "INCOME" ? "Receita" : "Despesa"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor={`category-${category.id}`} className="text-sm cursor-pointer">
+                            {category.isShared ? "Compartilhado" : "Privado"}
+                          </Label>
+                          <Switch
+                            id={`category-${category.id}`}
+                            checked={category.isShared}
+                            onCheckedChange={() =>
+                              handleToggleShare("category", category.id, category.isShared)
+                            }
+                          />
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
