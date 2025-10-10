@@ -452,7 +452,7 @@ export default function FamilyPage() {
                           <div className="text-sm text-muted-foreground">
                             {new Date(transaction.date).toLocaleDateString("pt-BR")} • 
                             {transaction.type === "INCOME" ? " Receita" : " Despesa"} •
-                            R$ {transaction.amount.toFixed(2)}
+                            R$ {Number(transaction.amount).toFixed(2)}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -501,9 +501,9 @@ export default function FamilyPage() {
                           <div className="flex-1">
                             <div className="font-medium">{goal.name}</div>
                             <div className="text-sm text-muted-foreground">
-                              R$ {goal.currentAmount.toFixed(2)} de R$ {goal.targetAmount.toFixed(2)}
+                              R$ {Number(goal.currentAmount).toFixed(2)} de R$ {Number(goal.targetAmount).toFixed(2)}
                               {" • "}
-                              {Math.round((goal.currentAmount / goal.targetAmount) * 100)}%
+                              {Math.round((Number(goal.currentAmount) / Number(goal.targetAmount)) * 100)}%
                             </div>
                           </div>
                         </div>
