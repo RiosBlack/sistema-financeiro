@@ -57,10 +57,11 @@ export function UserForm({ user, onSuccess }: UserFormProps) {
 
   const onSubmit = async (data: UserFormData) => {
     try {
-      // Remover password se estiver vazio (para edição)
+      // Remover password e roleId se estiverem vazios
       const submitData = {
         ...data,
         password: data.password || undefined,
+        roleId: data.roleId && data.roleId !== "" ? data.roleId : undefined,
       };
 
       if (user) {
@@ -146,14 +147,20 @@ export function UserForm({ user, onSuccess }: UserFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Perfil (Opcional)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select 
+                onValueChange={(value) => {
+                  // Se selecionar "none", limpar o campo
+                  field.onChange(value === "none" ? "" : value);
+                }} 
+                value={field.value || "none"}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um perfil" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="USER">Usuário Padrão</SelectItem>
+                  <SelectItem value="none">Nenhum (sem perfil)</SelectItem>
                   {roles.map((role) => (
                     <SelectItem key={role.id} value={role.id}>
                       {role.name}

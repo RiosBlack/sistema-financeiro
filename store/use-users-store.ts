@@ -136,9 +136,7 @@ export const useUsersStore = create<UsersStore>((set, get) => ({
 
       const updatedUser = await response.json();
       set((state) => ({
-        users: state.users.map((user) =>
-          user.id === id ? updatedUser : user
-        ),
+        users: state.users.map((user) => (user.id === id ? updatedUser : user)),
       }));
 
       toast.success("Usuário atualizado com sucesso!");
@@ -175,4 +173,3 @@ export const useUsersStore = create<UsersStore>((set, get) => ({
     }
   },
 }));
-
