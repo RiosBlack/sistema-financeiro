@@ -62,17 +62,17 @@ export const useUsersStore = create<UsersStore>((set, get) => ({
     try {
       const response = await fetch("/api/users");
       console.log("📡 Response status:", response.status);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error("❌ Erro da API:", errorData);
         throw new Error(errorData.error || "Erro ao buscar usuários");
       }
-      
+
       const users = await response.json();
       console.log("✅ Usuários recebidos:", users);
       console.log("📊 Total de usuários:", users.length);
-      
+
       set({ users, isLoading: false });
     } catch (error) {
       const message =

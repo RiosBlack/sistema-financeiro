@@ -14,18 +14,29 @@ export async function GET() {
     }
 
     // Verificar se o usuário é admin
-    const currentUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { role: true },
-    });
+    try {
+      const currentUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: { role: true },
+      });
 
-    if (!currentUser || currentUser.role?.name?.toLowerCase() !== "admin") {
+      console.log("User verificado:", currentUser);
+      console.log("Role do user:", currentUser?.role);
+
+      if (!currentUser || currentUser.role?.name?.toLowerCase() !== "admin") {
+        return NextResponse.json(
+          {
+            error:
+              "Acesso negado. Apenas administradores podem acessar esta rota.",
+          },
+          { status: 403 }
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao verificar admin:", error);
       return NextResponse.json(
-        {
-          error:
-            "Acesso negado. Apenas administradores podem acessar esta rota.",
-        },
-        { status: 403 }
+        { error: "Erro ao verificar permissões" },
+        { status: 500 }
       );
     }
 
