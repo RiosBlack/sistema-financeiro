@@ -44,7 +44,7 @@ export default function AccountsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Saldo Total</CardDescription>
-            <CardTitle className="text-3xl">
+            <CardTitle className={`text-3xl ${totalBalance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {accountsLoading ? (
                 <Loader2 className="h-8 w-8 animate-spin" />
               ) : (
@@ -61,7 +61,7 @@ export default function AccountsPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Limite de Crédito Total</CardDescription>
-            <CardTitle className="text-3xl">
+            <CardTitle className={`text-3xl ${totalCreditLimit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {cardsLoading ? (
                 <Loader2 className="h-8 w-8 animate-spin" />
               ) : (
@@ -182,7 +182,7 @@ export default function AccountsPage() {
                   <CardContent>
                     <div className="space-y-2">
                       <div>
-                        <p className="text-2xl font-bold">
+                        <p className={`text-2xl font-bold ${Number(account.currentBalance) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                           R$ {Number(account.currentBalance).toFixed(2)}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -255,7 +255,7 @@ export default function AccountsPage() {
                     <div className="space-y-2">
                       {card.limit && (
                         <div>
-                          <p className="text-2xl font-bold">
+                          <p className={`text-2xl font-bold ${Number(card.limit) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                             R$ {Number(card.limit).toFixed(2)}
                           </p>
                           <p className="text-xs text-muted-foreground">
