@@ -29,9 +29,9 @@ export function Header() {
   }, [fetchInvitations])
 
   const handleLogout = async () => {
-    await signOut({ 
+    await signOut({
       callbackUrl: '/login',
-      redirect: true 
+      redirect: true
     })
   }
 
@@ -57,8 +57,8 @@ export function Header() {
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-4 w-4" />
               {pendingInvitationsCount > 0 && (
-                <Badge 
-                  variant="destructive" 
+                <Badge
+                  variant="destructive"
                   className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                 >
                   {pendingInvitationsCount}
@@ -133,15 +133,6 @@ export function Header() {
                 </p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Perfil</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <span>Configurações</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sair</span>

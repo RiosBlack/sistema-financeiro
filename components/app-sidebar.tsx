@@ -74,14 +74,14 @@ export function AppSidebar() {
           <div className="relative h-10 w-10">
             <Image
               src="/logo.png"
-              alt="Logo FinanceApp"
+              alt="Logo PigPay"
               fill
               className="object-contain rounded-lg"
               unoptimized
             />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">FinanceApp</h2>
+            <h2 className="text-lg font-semibold">PigPay</h2>
             <p className="text-sm text-muted-foreground">Sistema Financeiro</p>
           </div>
         </div>
