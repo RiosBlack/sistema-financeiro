@@ -6,23 +6,13 @@ import bcrypt from "bcryptjs";
 
 // GET - Listar todos os usuários (apenas admin)
 export async function GET() {
-  console.log("🚀 Iniciando GET /api/users");
   try {
-    console.log("1️⃣ Buscando sessão...");
     const session = await getServerSession(authOptions);
-    console.log("2️⃣ Sessão obtida:", !!session);
 
     if (!session?.user) {
-      console.log("❌ Sem sessão");
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    console.log("3️⃣ Usuário autenticado:", session.user.email);
-
-    // TEMPORÁRIO: Remover verificação de admin para testar
-    // TODO: Adicionar verificação de admin depois que funcionar
-
-    console.log("4️⃣ Buscando usuários no Prisma...");
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -49,13 +39,8 @@ export async function GET() {
       },
     });
 
-    console.log("5️⃣ Usuários encontrados:", users.length);
-    console.log("6️⃣ Retornando resposta...");
     return NextResponse.json(users);
   } catch (error) {
-    console.error("💥 ERRO CAPTURADO:", error);
-    console.error("💥 Tipo do erro:", typeof error);
-    console.error("💥 Stack:", error instanceof Error ? error.stack : "N/A");
     return NextResponse.json(
       { error: "Erro ao buscar usuários" },
       { status: 500 }
@@ -130,7 +115,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
-    console.error("Erro ao criar usuário:", error);
     return NextResponse.json(
       { error: "Erro ao criar usuário" },
       { status: 500 }

@@ -14,7 +14,7 @@ export function Overview() {
         // Buscar transações dos últimos 6 meses diretamente da API
         const now = new Date()
         const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
-        
+
         const params = new URLSearchParams({
           startDate: sixMonthsAgo.toISOString().split('T')[0],
           endDate: now.toISOString().split('T')[0],
@@ -22,10 +22,8 @@ export function Overview() {
 
         const response = await fetch(`/api/transactions?${params.toString()}`)
         if (!response.ok) throw new Error('Erro ao buscar transações')
-        
+
         const data = await response.json()
-        console.log('📊 Overview - Transações recebidas:', data.transactions?.length || 0)
-        console.log('📊 Overview - Dados completos:', data)
         processChartData(data.transactions || [])
       } catch (error) {
         console.error('Erro ao buscar dados do gráfico:', error)
@@ -42,8 +40,6 @@ export function Overview() {
     const now = new Date()
     const last6Months = []
 
-    console.log('📊 Processando transações:', transactions.length)
-
     // Criar array com os últimos 6 meses
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -56,18 +52,9 @@ export function Overview() {
       })
     }
 
-    console.log('📊 Meses criados:', last6Months.map(m => `${m.name}/${m.year}`))
-
     // Agregar transações por mês
     let processedCount = 0
     transactions.forEach((transaction) => {
-      console.log('📊 Transação:', {
-        description: transaction.description,
-        type: transaction.type,
-        amount: transaction.amount,
-        isPaid: transaction.isPaid,
-        date: transaction.date
-      })
 
       // REMOVIDO FILTRO DE isPaid - mostrar todas as transações
       const date = new Date(transaction.date)
@@ -85,9 +72,6 @@ export function Overview() {
         }
       }
     })
-
-    console.log('📊 Transações processadas:', processedCount)
-    console.log('📊 Dados finais:', last6Months)
 
     setChartData(last6Months)
   }
@@ -111,12 +95,12 @@ export function Overview() {
   return (
     <ResponsiveContainer width="100%" height={350}>
       <BarChart data={chartData}>
-        <XAxis 
-          dataKey="name" 
-          stroke="#888888" 
-          fontSize={12} 
-          tickLine={false} 
-          axisLine={false} 
+        <XAxis
+          dataKey="name"
+          stroke="#888888"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
         />
         <YAxis
           stroke="#888888"
@@ -125,8 +109,8 @@ export function Overview() {
           axisLine={false}
           tickFormatter={(value) => `R$${value.toFixed(0)}`}
         />
-        <Tooltip 
-          formatter={(value: number) => [`R$${value.toFixed(2)}`, ""]} 
+        <Tooltip
+          formatter={(value: number) => [`R$${value.toFixed(2)}`, ""]}
           labelFormatter={(label) => `Mês: ${label}`}
           contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
         />

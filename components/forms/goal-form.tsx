@@ -37,7 +37,7 @@ export function GoalForm({ onSuccess, onCancel }: GoalFormProps) {
     defaultValues: {
       name: "",
       description: "",
-      targetAmount: 0,
+      targetAmount: "" as any,
       deadline: "",
       icon: "🎯",
       color: "#3b82f6",
@@ -99,10 +99,10 @@ export function GoalForm({ onSuccess, onCancel }: GoalFormProps) {
                 <FormControl>
                   <CurrencyInput
                     placeholder="R$ 0,00"
-                    value={field.value || 0}
+                    value={field.value}
                     onValueChange={(values) => {
                       const { floatValue } = values;
-                      field.onChange(floatValue || 0);
+                      field.onChange(floatValue ?? undefined);
                     }}
                     onBlur={field.onBlur}
                   />

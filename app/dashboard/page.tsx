@@ -37,14 +37,9 @@ export default function DashboardPage() {
   // Calcular métricas
   const totalBalance = accounts.reduce((acc, account) => {
     const balance = Number(account.currentBalance)
-    console.log('💰 Conta:', account.name, 'Saldo:', balance)
     return acc + balance
   }, 0)
 
-  console.log('💰 Total de contas:', accounts.length)
-  console.log('💰 Saldo total calculado:', totalBalance)
-
-  // Receitas
   const incomeTransactions = transactions.filter(t => t.type === 'INCOME')
   const paidIncomeTransactions = incomeTransactions.filter(t => t.isPaid)
   const pendingIncomeTransactions = incomeTransactions.filter(t => !t.isPaid)
@@ -61,9 +56,6 @@ export default function DashboardPage() {
   const totalExpenses = expenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
   const paidExpenses = paidExpenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
   const pendingExpenses = pendingExpenseTransactions.reduce((acc, t) => acc + Number(t.amount), 0)
-
-  console.log('💵 Receitas - Total:', totalIncome, 'Pagas:', paidIncome, 'Pendentes:', pendingIncome)
-  console.log('💸 Despesas - Total:', totalExpenses, 'Pagas:', paidExpenses, 'Pendentes:', pendingExpenses)
 
   const completedGoals = goals.filter(g => g.isCompleted).length
   const totalGoals = goals.length

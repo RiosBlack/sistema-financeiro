@@ -41,7 +41,7 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       description: "",
-      amount: 0,
+      amount: "" as any,
       type,
       date: new Date().toISOString().split('T')[0],
       categoryId: "",
@@ -74,7 +74,7 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
   async function onSubmit(data: TransactionFormData) {
     try {
       setIsSubmitting(true)
-      
+
       const response = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -87,14 +87,14 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
       }
 
       const result = await response.json()
-      
+
       // Se foi parcelada, mostra mensagem diferente
       if (result.installments) {
         toast.success(`Transação parcelada criada! ${result.installments.length} parcelas.`)
       } else {
         toast.success('Transação criada com sucesso!')
       }
-      
+
       onSuccess?.()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao criar transação')
@@ -129,12 +129,12 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
               <FormItem>
                 <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                  <CurrencyInput 
+                  <CurrencyInput
                     placeholder="R$ 0,00"
-                    value={field.value || 0}
+                    value={field.value}
                     onValueChange={(values) => {
                       const { floatValue } = values;
-                      field.onChange(floatValue || 0);
+                      field.onChange(floatValue ?? undefined);
                     }}
                     onBlur={field.onBlur}
                   />
@@ -177,13 +177,13 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Conta Bancária {!watchCard && "*"}</FormLabel>
-                <Select 
+                <Select
                   onValueChange={(value) => {
                     field.onChange(value === "none" ? "" : value)
                     if (value !== "none") {
                       form.setValue("cardId", "")
                     }
-                  }} 
+                  }}
                   value={field.value || "none"}
                   disabled={!!watchCard}
                 >
@@ -211,7 +211,7 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cartão {!watchBankAccount && "*"}</FormLabel>
-                <Select 
+                <Select
                   onValueChange={(value) => {
                     field.onChange(value === "none" ? "" : value)
                     if (value !== "none") {
@@ -262,10 +262,10 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
               <FormItem>
                 <FormLabel>Parcelas</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    min="1" 
-                    max="60" 
+                  <Input
+                    type="number"
+                    min="1"
+                    max="60"
                     placeholder="1"
                     {...field}
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
@@ -348,8 +348,8 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
             <FormItem>
               <FormLabel>Observações</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="Observações adicionais (opcional)" 
+                <Textarea
+                  placeholder="Observações adicionais (opcional)"
                   rows={3}
                   {...field}
                 />
@@ -363,8 +363,8 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancelar
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isSubmitting}
             className={type === "INCOME" ? "bg-green-600 hover:bg-green-700" : ""}
           >
