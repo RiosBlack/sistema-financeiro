@@ -8,9 +8,12 @@ import { Providers } from "./providers"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Sistema Financeiro",
+  title: "PigPay",
   description: "Sistema completo de gestão financeira pessoal",
-    generator: 'v0.app'
+  generator: 'v0.app',
+  icons: {
+    icon: '/logo.png',
+  },
 }
 
 export default function RootLayout({

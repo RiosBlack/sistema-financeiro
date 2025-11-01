@@ -63,14 +63,14 @@ export default function LoginPage() {
             <div className="relative h-16 w-16">
               <Image
                 src="/logo.png"
-                alt="Logo Sistema Financeiro"
+                alt="Logo PigPay"
                 fill
                 className="object-contain rounded-lg"
                 unoptimized
               />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Sistema Financeiro</CardTitle>
+          <CardTitle className="text-2xl font-bold">PigPay</CardTitle>
           <CardDescription>Entre com suas credenciais para acessar sua conta</CardDescription>
         </CardHeader>
         <CardContent>

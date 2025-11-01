@@ -82,7 +82,7 @@ export function AppSidebar() {
           </div>
           <div>
             <h2 className="text-lg font-semibold">PigPay</h2>
-            <p className="text-sm text-muted-foreground">Sistema Financeiro</p>
+            <p className="text-sm text-muted-foreground">Gestão Financeira</p>
           </div>
         </div>
       </SidebarHeader>
