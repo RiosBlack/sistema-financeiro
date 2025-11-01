@@ -43,7 +43,7 @@ export const useMemberViewStore = create<MemberViewStore>((set) => ({
       if (filters.endDate) queryParams.append("endDate", filters.endDate);
 
       const queryString = queryParams.toString();
-      const url = `/api/family/members/${userId}/data${queryString ? `?${queryString}` : ""}`;
+      const url = `/api/family/member-data/${userId}${queryString ? `?${queryString}` : ""}`;
 
       const response = await fetch(url);
 

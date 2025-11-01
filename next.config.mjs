@@ -9,9 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    instrumentationHook: false,
-  },
   webpack: (config, { isServer }) => {
     // Ignora erros da extensão Console Ninja
     if (!isServer) {

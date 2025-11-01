@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -128,12 +129,14 @@ export function TransactionForm({ type, onSuccess, onCancel }: TransactionFormPr
               <FormItem>
                 <FormLabel>Valor (R$)</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    placeholder="0.00" 
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                  <CurrencyInput 
+                    placeholder="R$ 0,00"
+                    value={field.value || 0}
+                    onValueChange={(values) => {
+                      const { floatValue } = values;
+                      field.onChange(floatValue || 0);
+                    }}
+                    onBlur={field.onBlur}
                   />
                 </FormControl>
                 <FormMessage />

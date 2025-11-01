@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 // DELETE - Remover membro da família (apenas OWNER)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { memberId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -33,7 +33,7 @@ export async function DELETE(
     // Buscar o membro a ser removido
     const memberToRemove = await prisma.familyMember.findUnique({
       where: {
-        id: params.id,
+        id: params.memberId,
       },
     });
 
@@ -63,7 +63,7 @@ export async function DELETE(
     // Remover o membro
     await prisma.familyMember.delete({
       where: {
-        id: params.id,
+        id: params.memberId,
       },
     });
 

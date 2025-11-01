@@ -1,279 +1,144 @@
 <!-- 83d16ba0-71cc-4992-adcf-597ef7486100 7f3805e1-9ee7-4bf3-aceb-ef4cc098bc48 -->
-# Sistema de Família Compartilhada
+# Refatoração do Sistema de Compartilhamento Familiar
 
-## Visão Geral
+## Mudanças Principais
 
-Implementar funcionalidade para usuários adicionarem membros da família e compartilharem dados financeiros (contas, transações, cartões, metas, categorias) com controle de permissões.
+### 1. Simplificar Compartilhamento Automático
 
-## Arquitetura de Dados
+**Remover sistema de toggle manual:**
 
-### 1. Novos Modelos Prisma (prisma/schema.prisma)
+- Remover card "Gerenciar Compartilhamentos" de `app/dashboard/family/page.tsx`
+- Remover imports de stores (useTransactionsStore, useGoalsStore, useBankAccountsStore, useCardsStore)
+- Remover função `handleToggleShare`
+- Remover método `toggleShare` de `store/use-family-store.ts`
 
-**Family** - Representa um grupo familiar
+**Atualizar API de compartilhamento:**
 
-```prisma
-model Family {
-  id          String   @id @default(cuid())
-  name        String
-  createdById String
-  createdBy   User     @relation("FamilyCreator", fields: [createdById], references: [id])
-  members     FamilyMember[]
-  invitations FamilyInvitation[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-```
+- Deletar `app/api/family/share/route.ts` (não será mais necessário)
+- Modificar lógica nas APIs existentes para compartilhar automaticamente baseado na família:
+- `app/api/bank-accounts/route.ts`: Ao criar conta, se usuário tem família, definir `isShared: true` automaticamente
+- `app/api/cards/route.ts`: Ao criar cartão, se usuário tem família, definir `isShared: true` automaticamente
+- `app/api/transactions/route.ts`: Ao criar transação, se usuário tem família, definir `isShared: true` automaticamente
+- `app/api/goals/route.ts`: Ao criar meta, se usuário tem família, definir `isShared: true` automaticamente
 
-**FamilyMember** - Membros da família
+### 2. Criar Nova Página de Visualização de Membros
 
-```prisma
-model FamilyMember {
-  id       String @id @default(cuid())
-  familyId String
-  userId   String
-  role     FamilyRole @default(MEMBER) // OWNER ou MEMBER
-  family   Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  joinedAt DateTime @default(now())
-  @@unique([familyId, userId])
-}
+**Rota: `/dashboard/family/shared`**
 
-enum FamilyRole {
-  OWNER   // Criador, pode remover membros
-  MEMBER  // Apenas visualização
-}
-```
+Criar arquivo `app/dashboard/family/shared/page.tsx`:
 
-**FamilyInvitation** - Convites pendentes
+- Listar todos os membros da família em cards clicáveis
+- Cada card mostra: foto, nome, email, badge (OWNER/MEMBER)
+- Ao clicar em um membro, abre uma view modal ou navega para `/dashboard/family/shared/[userId]`
 
-```prisma
-model FamilyInvitation {
-  id         String @id @default(cuid())
-  familyId   String
-  invitedId  String // ID do usuário convidado
-  invitedBy  String // ID de quem convidou
-  status     InvitationStatus @default(PENDING)
-  family     Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  invited    User   @relation("InvitationsReceived", fields: [invitedId], references: [id])
-  inviter    User   @relation("InvitationsSent", fields: [invitedBy], references: [id])
-  createdAt  DateTime @default(now())
-  respondedAt DateTime?
-  @@unique([familyId, invitedId])
-}
+**Rota dinâmica: `/dashboard/family/shared/[userId]/page.tsx`**
 
-enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-```
+Criar dashboard completo read-only com dados do membro selecionado:
 
-**Adicionar campos de compartilhamento aos modelos existentes:**
+- Header mostrando nome do membro e botão "Voltar"
+- Reutilizar componentes do dashboard principal mas em modo visualização
+- Seções:
+- Cards de métricas (Saldo Total, Receitas, Despesas, Metas)
+- Gráfico de Overview (receitas vs despesas)
+- Gráfico de Despesas por Categoria
+- Gráfico de Progresso de Metas
+- Lista de Transações Recentes (últimas 10)
+- Lista de Contas Bancárias
+- Lista de Cartões
+- Lista de Metas
 
-- `BankAccount`: adicionar campo `isShared Boolean @default(false)`
-- `Card`: adicionar campo `isShared Boolean @default(false)`
-- `Category`: adicionar campo `isShared Boolean @default(false)`
-- `Transaction`: adicionar campo `isShared Boolean @default(false)`
-- `Goal`: já tem suporte via `UserGoal`
+### 3. Criar Nova API para Buscar Dados de Membros
 
-### 2. API Routes
+**Arquivo: `app/api/family/members/[userId]/data/route.ts`**
 
-**Família** (`app/api/family/route.ts`):
+Endpoint GET que retorna todos os dados financeiros de um membro específico:
 
-- `GET` - Buscar família do usuário atual
-- `POST` - Criar nova família
+- Verificar se o usuário autenticado está na mesma família que o userId solicitado
+- Retornar 403 se não estiver na mesma família
+- Buscar e retornar:
+- Contas bancárias (com saldo)
+- Cartões
+- Transações (com filtros de data opcionais via query params)
+- Metas
+- Categorias personalizadas
+- Todas as queries devem filtrar por `userId` do membro e `isShared: true`
 
-**Membros** (`app/api/family/members/route.ts`):
+### 4. Criar Store para Dados de Visualização
 
-- `GET` - Listar membros da família
-- `DELETE` - Remover membro (apenas OWNER)
+**Arquivo: `store/use-member-view-store.ts`**
 
-**Convites** (`app/api/family/invitations/route.ts`):
+Store Zustand para gerenciar dados do membro sendo visualizado:
 
-- `GET` - Listar convites pendentes do usuário
-- `POST` - Enviar convite para outro usuário (busca por email)
+- Estado: `memberData` (contas, cartões, transações, metas, categorias)
+- Estado: `selectedMemberId`
+- Estado: `isLoading`
+- Ação: `fetchMemberData(userId: string)` - chama API `/api/family/members/[userId]/data`
+- Ação: `clearMemberData()` - limpa dados ao sair da visualização
 
-**Ações de Convite** (`app/api/family/invitations/[id]/route.ts`):
+### 5. Atualizar Página Principal da Família
 
-- `PATCH` - Aceitar/rejeitar convite
+**Arquivo: `app/dashboard/family/page.tsx`**
 
-**Compartilhamento** (`app/api/family/share/route.ts`):
+Adicionar botão "Visualizar Dados Compartilhados":
 
-- `POST` - Compartilhar/descompartilhar item específico (conta, cartão, categoria, transação)
+- Posicionar ao lado de "Convidar Membro" no header
+- Redireciona para `/dashboard/family/shared`
+- Ícone: Eye ou Share2
 
-### 3. Modificações nas APIs Existentes
+Remover todo o card de gerenciamento de compartilhamento (tabs com Contas, Cartões, Transações, Metas).
 
-Atualizar queries para incluir dados compartilhados:
+### 6. Atualizar Schema do Prisma (se necessário)
 
-**Contas** (`app/api/bank-accounts/route.ts`):
+Verificar se campos `isShared` já existem em:
 
-```typescript
-// Buscar contas próprias + contas compartilhadas por membros da família
-const accounts = await prisma.bankAccount.findMany({
-  where: {
-    OR: [
-      { createdById: userId }, // Minhas contas
-      { 
-        isShared: true,
-        createdBy: {
-          familyMembers: {
-            some: {
-              family: {
-                members: {
-                  some: { userId }
-                }
-              }
-            }
-          }
-        }
-      } // Contas compartilhadas por família
-    ]
-  }
-})
-```
+- BankAccount
+- Card
+- Transaction
+- Goal
+- Category
 
-Aplicar lógica similar para:
+Se não existirem, adicionar e criar migração.
 
-- Cartões (`app/api/cards/route.ts`)
-- Transações (`app/api/transactions/route.ts`)
-- Categorias (`app/api/categories/route.ts`)
-- Metas (já funciona via `UserGoal`)
+### 7. Componentes Reutilizáveis
 
-### 4. Store Zustand
+Criar componente wrapper para modo visualização:
+**Arquivo: `components/member-dashboard-view.tsx`**
 
-**Family Store** (`store/use-family-store.ts`):
+Recebe `userId` como prop e renderiza dashboard completo usando dados do store `use-member-view-store`.
 
-```typescript
-interface FamilyStore {
-  family: Family | null
-  members: FamilyMember[]
-  invitations: FamilyInvitation[]
-  pendingInvitationsCount: number
-  fetchFamily: () => Promise<void>
-  createFamily: (name: string) => Promise<void>
-  inviteMember: (email: string) => Promise<void>
-  acceptInvitation: (id: string) => Promise<void>
-  rejectInvitation: (id: string) => Promise<void>
-  removeMember: (memberId: string) => Promise<void>
-  toggleShare: (type: string, itemId: string, shared: boolean) => Promise<void>
-}
-```
+## Arquivos a Modificar
 
-### 5. Componentes UI
+1. `app/dashboard/family/page.tsx` - Simplificar, remover tabs de compartilhamento
+2. `store/use-family-store.ts` - Remover toggleShare
+3. `app/api/bank-accounts/route.ts` - Auto-compartilhar ao criar
+4. `app/api/cards/route.ts` - Auto-compartilhar ao criar
+5. `app/api/transactions/route.ts` - Auto-compartilhar ao criar
+6. `app/api/goals/route.ts` - Auto-compartilhar ao criar
 
-**Página de Família** (`app/dashboard/family/page.tsx`):
+## Arquivos a Criar
 
-- Card com informações da família
-- Lista de membros
-- Botão para convidar novo membro
-- Botão para sair da família (se MEMBER)
+1. `app/dashboard/family/shared/page.tsx` - Lista de membros
+2. `app/dashboard/family/shared/[userId]/page.tsx` - Dashboard do membro
+3. `app/api/family/members/[userId]/data/route.ts` - API para buscar dados
+4. `store/use-member-view-store.ts` - Store para visualização
+5. `components/member-dashboard-view.tsx` - Componente reutilizável
 
-**Dialog de Convite** (`components/family/invite-member-dialog.tsx`):
+## Arquivos a Deletar
 
-- Input para buscar usuário por email
-- Botão para enviar convite
-
-**Notificações de Convite** (`components/family/invitation-notifications.tsx`):
-
-- Badge no header com contador
-- Dropdown com convites pendentes
-- Botões aceitar/rejeitar
-
-**Toggle de Compartilhamento**:
-
-- Adicionar switch em formulários de conta, cartão, categoria, transação
-- Mostrar ícone de "compartilhado" em listagens
-
-### 6. Modificações em Componentes Existentes
-
-**Header** (`components/header.tsx`):
-
-- Adicionar badge de notificações de convite
-- Dropdown para aceitar/rejeitar convites
-
-**Sidebar** (`components/app-sidebar.tsx`):
-
-- Adicionar item "Família" no menu
-
-**Formulários**:
-
-- `AccountForm`: adicionar toggle "Compartilhar com família"
-- `CardForm`: adicionar toggle "Compartilhar com família"
-- `CategoryForm`: adicionar toggle "Compartilhar com família"
-- `TransactionForm`: adicionar toggle "Compartilhar com família"
-
-**Listagens**:
-
-- Adicionar indicador visual (ícone/badge) para itens compartilhados
-- Mostrar "Criado por [nome]" em itens de outros membros
-- Desabilitar edição/exclusão para itens de outros membros
-
-### 7. Regras de Permissão
-
-**OWNER (Criador da família)**:
-
-- Visualizar todos os dados compartilhados
-- Remover membros
-- Não pode editar/excluir dados de outros membros
-
-**MEMBER**:
-
-- Visualizar todos os dados compartilhados
-- Não pode editar/excluir dados de outros membros
-- Pode sair da família
-
-**Dados Próprios**:
-
-- Sempre pode editar/excluir seus próprios dados
-- Pode compartilhar/descompartilhar a qualquer momento
-
-### 8. Validações e Regras de Negócio
-
-- Usuário só pode estar em uma família por vez
-- Não pode convidar usuário que já está em outra família
-- Não pode convidar a si mesmo
-- Convite expira após 30 dias
-- Ao sair da família, dados compartilhados ficam ocultos
-- Ao excluir família (OWNER), todos os membros são removidos
-- Transações vinculadas a contas compartilhadas ficam visíveis mesmo se a transação não for compartilhada
-
-## Ordem de Implementação
-
-1. Criar migração Prisma com novos modelos
-2. Implementar APIs de família e convites
-3. Criar store Zustand
-4. Modificar queries das APIs existentes
-5. Criar componentes de UI (página família, dialogs, notificações)
-6. Adicionar toggles de compartilhamento nos formulários
-7. Atualizar listagens com indicadores visuais
-8. Implementar regras de permissão no frontend
-9. Testes e ajustes finais
+1. `app/api/family/share/route.ts` - Não mais necessário
 
 ### To-dos
 
-- [x] Criar modelos Family, FamilyMember, FamilyInvitation e adicionar campos isShared aos modelos existentes
-- [x] Executar migração do Prisma para criar novas tabelas
-- [x] Implementar APIs de família (criar, buscar, membros)
-- [x] Implementar APIs de convites (enviar, listar, aceitar, rejeitar)
-- [x] ~~Implementar API de compartilhamento de itens~~ (REFATORADO: Compartilhamento agora é automático)
-- [x] Modificar APIs existentes (contas, cartões, transações, categorias, metas) para incluir dados compartilhados
-  - [x] API de contas - Auto-compartilhamento implementado
-  - [x] API de cartões - Auto-compartilhamento implementado
-  - [x] API de transações - Auto-compartilhamento implementado
-  - [x] API de categorias - Queries ajustadas
-  - [x] API de metas - Auto-compartilhamento implementado
-- [x] Criar store Zustand para gerenciamento de família
-- [x] Criar página de família com listagem de membros e convites
-- [x] Criar componentes de notificação e gerenciamento de convites
-- [x] ~~Adicionar toggles de compartilhamento em todos os formulários~~ (REFATORADO: Removido - compartilhamento automático)
-- [x] Adicionar indicadores visuais de compartilhamento nas listagens
-- [x] Implementar regras de permissão (desabilitar edição/exclusão de itens de outros)
-- [x] Adicionar item Família no sidebar e badge de notificações no header
-- [x] **REFATORAÇÃO COMPLETA:**
-  - [x] Remover UI de compartilhamento manual (toggles)
-  - [x] Implementar compartilhamento automático baseado em família
-  - [x] Criar sistema de visualização separado (/dashboard/family/shared)
-  - [x] Criar API para buscar dados de membros específicos
-  - [x] Criar store para visualização de membros (use-member-view-store)
-  - [x] Criar componente reutilizável de dashboard read-only
-  - [x] Limpar schemas de validação (remover isShared dos forms)
+- [ ] Criar modelos Family, FamilyMember, FamilyInvitation e adicionar campos isShared aos modelos existentes
+- [ ] Executar migração do Prisma para criar novas tabelas
+- [ ] Implementar APIs de família (criar, buscar, membros)
+- [ ] Implementar APIs de convites (enviar, listar, aceitar, rejeitar)
+- [ ] Implementar API de compartilhamento de itens
+- [ ] Modificar APIs existentes (contas, cartões, transações, categorias) para incluir dados compartilhados
+- [ ] Criar store Zustand para gerenciamento de família
+- [ ] Criar página de família com listagem de membros e convites
+- [ ] Criar componentes de notificação e gerenciamento de convites
+- [ ] Adicionar toggles de compartilhamento em todos os formulários
+- [ ] Adicionar indicadores visuais de compartilhamento nas listagens
+- [ ] Implementar regras de permissão (desabilitar edição/exclusão de itens de outros)
+- [ ] Adicionar item Família no sidebar e badge de notificações no header

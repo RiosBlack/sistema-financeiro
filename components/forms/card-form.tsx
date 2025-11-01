@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { CurrencyInput } from "@/components/ui/currency-input"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCardsStore } from "@/store/use-cards-store"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
@@ -191,13 +192,14 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
                   <FormItem>
                     <FormLabel>Limite</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
-                        value={field.value || ""}
+                      <CurrencyInput
+                        placeholder="R$ 0,00"
+                        value={field.value || undefined}
+                        onValueChange={(values) => {
+                          const { floatValue } = values;
+                          field.onChange(floatValue || undefined);
+                        }}
+                        onBlur={field.onBlur}
                       />
                     </FormControl>
                     <FormMessage />
