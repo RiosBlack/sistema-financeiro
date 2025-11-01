@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { CurrencyInput } from "@/components/ui/currency-input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { brandIcons } from "@/components/ui/card-brands"
 import { useCardsStore } from "@/store/use-cards-store"
 import { useBankAccountsStore } from "@/store/use-bank-accounts-store"
 import { useToast } from "@/hooks/use-toast"
@@ -26,6 +27,25 @@ const cardSchema = z.object({
 })
 
 type CardFormData = z.infer<typeof cardSchema>
+
+const brandLabels: Record<string, string> = {
+  VISA: "Visa",
+  MASTERCARD: "Mastercard",
+  ELO: "Elo",
+  AMEX: "American Express",
+  HIPERCARD: "Hipercard",
+  OTHER: "Outra",
+};
+
+const renderBrandOption = (brand: keyof typeof brandIcons, label: string) => {
+  const BrandIcon = brandIcons[brand];
+  return (
+    <div className="flex items-center gap-2">
+      <BrandIcon className={brand === "OTHER" ? "h-4 w-4" : "h-4 w-12"} />
+      <span>{label}</span>
+    </div>
+  );
+};
 
 interface CardFormProps {
   onSuccess?: () => void
@@ -158,27 +178,46 @@ export function CardForm({ onSuccess, onCancel }: CardFormProps) {
           <FormField
             control={form.control}
             name="brand"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Bandeira</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a bandeira" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="VISA">Visa</SelectItem>
-                    <SelectItem value="MASTERCARD">Mastercard</SelectItem>
-                    <SelectItem value="ELO">Elo</SelectItem>
-                    <SelectItem value="AMEX">American Express</SelectItem>
-                    <SelectItem value="HIPERCARD">Hipercard</SelectItem>
-                    <SelectItem value="OTHER">Outra</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const BrandIcon = field.value ? brandIcons[field.value as keyof typeof brandIcons] || brandIcons.OTHER : null;
+              return (
+                <FormItem>
+                  <FormLabel>Bandeira</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a bandeira">
+                          {BrandIcon && field.value && (
+                            renderBrandOption(field.value as keyof typeof brandIcons, brandLabels[field.value] || "")
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="VISA">
+                        {renderBrandOption("VISA", brandLabels.VISA)}
+                      </SelectItem>
+                      <SelectItem value="MASTERCARD">
+                        {renderBrandOption("MASTERCARD", brandLabels.MASTERCARD)}
+                      </SelectItem>
+                      <SelectItem value="ELO">
+                        {renderBrandOption("ELO", brandLabels.ELO)}
+                      </SelectItem>
+                      <SelectItem value="AMEX">
+                        {renderBrandOption("AMEX", brandLabels.AMEX)}
+                      </SelectItem>
+                      <SelectItem value="HIPERCARD">
+                        {renderBrandOption("HIPERCARD", brandLabels.HIPERCARD)}
+                      </SelectItem>
+                      <SelectItem value="OTHER">
+                        {renderBrandOption("OTHER", brandLabels.OTHER)}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
 

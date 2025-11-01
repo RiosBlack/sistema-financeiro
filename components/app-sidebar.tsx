@@ -1,6 +1,7 @@
 "use client"
 
-import { Home, CreditCard, Target, TrendingUp, Settings, LogOut, Tag, Users } from "lucide-react"
+import { Home, CreditCard, Target, Settings, LogOut, Tag, Users, TrendingUp } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
@@ -70,8 +71,14 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-primary rounded-lg">
-            <TrendingUp className="h-6 w-6 text-primary-foreground" />
+          <div className="relative h-10 w-10">
+            <Image
+              src="/logo.png"
+              alt="Logo FinanceApp"
+              fill
+              className="object-contain rounded-lg"
+              unoptimized
+            />
           </div>
           <div>
             <h2 className="text-lg font-semibold">FinanceApp</h2>
