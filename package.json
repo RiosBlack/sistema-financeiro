@@ -7,6 +7,7 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
+    "seed-roles": "ts-node --esm scripts/seed-roles.ts",
     "create-user": "ts-node --esm scripts/create-user.ts",
     "seed": "ts-node prisma/seed.ts",
     "postinstall": "prisma generate"
