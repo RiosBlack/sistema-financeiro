@@ -10,11 +10,11 @@
     "start": "next start",
     "seed-roles": "ts-node --esm scripts/seed-roles.ts",
     "create-user": "ts-node --esm scripts/create-user.ts",
-    "seed": "ts-node prisma/seed.ts",
+    "seed": "ts-node --esm prisma/seed.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node --esm prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

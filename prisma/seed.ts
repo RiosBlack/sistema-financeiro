@@ -1,4 +1,12 @@
-const { PrismaClient } = require('../lib/generated/prisma');
+import { PrismaClient } from '../lib/generated/prisma/index.js';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const prisma = new PrismaClient();
 
@@ -48,12 +56,12 @@ async function main() {
   console.log('📝 Criando categorias de despesas...');
   for (const category of expenseCategories) {
     const existing = await prisma.category.findFirst({
-      where: { 
+      where: {
         name: category.name,
         type: category.type,
       },
     });
-    
+
     if (!existing) {
       await prisma.category.create({
         data: {
@@ -68,12 +76,12 @@ async function main() {
   console.log('📝 Criando categorias de receitas...');
   for (const category of incomeCategories) {
     const existing = await prisma.category.findFirst({
-      where: { 
+      where: {
         name: category.name,
         type: category.type,
       },
     });
-    
+
     if (!existing) {
       await prisma.category.create({
         data: {
