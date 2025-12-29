@@ -1,6 +1,15 @@
 import { PrismaClient } from '../lib/generated/prisma/index.js';
 import * as readline from 'readline';
 import * as bcrypt from 'bcryptjs';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Carregar variáveis de ambiente do arquivo .env na raiz do projeto
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const prisma = new PrismaClient();
 
@@ -78,7 +87,7 @@ async function createUser(email: string, name: string, password: string, roleNam
 async function main() {
   try {
     console.log('=== Criação de Usuário ===');
-    
+
     // Criar role se necessário
     console.log('\n=== Configuração da Role ===');
     const roleName = await question('Nome da role (ex: admin, user): ');
